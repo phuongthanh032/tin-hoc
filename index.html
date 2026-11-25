@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phân tích Dao động Tắt dần và Cộng hưởng — Câu 10B (HK261)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono cho hiển thị số liệu khoa học chính xác -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            lab: {
+              bg: '#f1f5f9',
+              card: '#ffffff',
+              border: '#e2e8f0',
+              primary: '#1d4ed8',
+              primaryDark: '#1e3a8a',
+              accent: '#0284c7',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Tùy chỉnh thanh trượt (range slider) chuẩn giao diện phòng thí nghiệm */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: #cbd5e1;
+      border-radius: 999px;
+      outline: none;
+      transition: background 0.15s;
+    }
+    input[type="range"]:hover {
+      background: #94a3b8;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #1d4ed8;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+      cursor: pointer;
+      transition: transform 0.1s, background-color 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background: #1e40af;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #1d4ed8;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+      cursor: pointer;
+    }
+    /* Tùy chỉnh thanh cuộn mảnh */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- ==================== HEADER KHOA HỌC ==================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+      <!-- Tiêu đề đề tài & Thông tin môn học -->
+      <div class="flex items-start sm:items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-700 to-indigo-800 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <!-- Icon sóng dao động cộng hưởng SVG -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2 12c2-6 4-6 6 0s4 6 6 0 4-9 6 0 2 4 2 0" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-slate-900">
+              PHÂN TÍCH DAO ĐỘNG TẮT DẦN VÀ CỘNG HƯỞNG (CÂU 10B)
+            </h1>
+            <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+              m·x'' + b·x' + k·x = F₀·cos(ωt)
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+            Tin học Vật lý Kỹ thuật — HK261 &bull; Mô phỏng số Runge-Kutta bậc 4 (RK4) &amp; Phân tích Phổ Năng lượng
+          </p>
+        </div>
+      </div>
+
+      <!-- Thanh kịch bản mẫu nhanh (Presets) -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-xs font-semibold text-slate-500 mr-1 hidden sm:inline">Kịch bản mẫu:</span>
+        <button type="button" data-preset="sharp_resonance"
+          class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition shadow-2xs">
+          Cộng hưởng sắc nét (Q cao)
+        </button>
+        <button type="button" data-preset="underdamped"
+          class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition shadow-2xs">
+          Dưới tới hạn (Underdamped)
+        </button>
+        <button type="button" data-preset="critically_damped"
+          class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition shadow-2xs">
+          Tắt dần tới hạn (Critically Damped)
+        </button>
+        <button type="button" data-preset="overdamped"
+          class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 transition shadow-2xs">
+          Quá tới hạn (Overdamped)
+        </button>
+        <button type="button" data-preset="free_damped"
+          class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 transition shadow-2xs">
+          Tắt dần tự do (F₀ = 0)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== NỘI DUNG CHÍNH ==================== -->
+  <main class="max-w-[1600px] mx-auto px-4 sm:px-6 py-5">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+      <!-- ==================== CỘT TRÁI: BẢNG ĐIỀU KHIỂN THAM SỐ REAL-TIME ==================== -->
+      <aside class="lg:col-span-4 xl:col-span-3 space-y-4 lg:sticky lg:top-20">
+        
+        <!-- Card 1: Phân loại chế độ dao động -->
+        <section id="regimeCard" class="bg-white rounded-xl border-2 border-blue-500/40 p-4 shadow-sm transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Phân loại chế độ dao động</span>
+            <span id="regimeBadge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
+              Underdamped
+            </span>
+          </div>
+          <h2 id="regimeTitle" class="text-base font-bold text-slate-900">
+            Dao động dưới tới hạn (Tắt dần chậm)
+          </h2>
+          <p id="regimeDesc" class="text-xs text-slate-600 mt-1 leading-relaxed">
+            Hệ số cản nhỏ hơn giá trị tới hạn (b &lt; b<sub>c</sub>, ζ &lt; 1). Vật dao động tuần hoàn quanh vị trí cân bằng với biên độ giảm dần theo hàm mũ e<sup>-γt</sup>.
+          </p>
+
+          <!-- Thanh trực quan tỉ số tắt dần zeta = b / bc -->
+          <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-slate-600">b<sub>c</sub> = 2√(mk) = <strong id="valBc" class="text-slate-900">10.000</strong> N·s/m</span>
+              <span class="text-slate-600">ζ = b/b<sub>c</sub> = <strong id="valZeta" class="text-blue-700">0.120</strong></span>
+            </div>
+            <div class="relative w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+              <!-- Vùng dưới tới hạn (0 -> 50% thanh tương ứng zeta 0 -> 1) -->
+              <div class="absolute inset-y-0 left-0 w-1/2 bg-blue-100 border-r-2 border-emerald-600"></div>
+              <div id="zetaBar" class="h-full bg-blue-600 rounded-full transition-all duration-150" style="width: 6%;"></div>
+            </div>
+            <div class="flex justify-between text-[10px] font-mono text-slate-400">
+              <span>ζ = 0 (Không cản)</span>
+              <span class="text-emerald-700 font-bold">ζ = 1 (Tới hạn)</span>
+              <span>ζ ≥ 2 (Quá tới hạn)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card 2: Nhập liệu 5 tham số vật lý chính (Real-time) -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3.5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+              Tham số Hệ dao động (Real-time)
+            </h2>
+            <span class="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              Cập nhật tức thì
+            </span>
+          </div>
+
+          <!-- 1. Khối lượng m -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label for="num_m" class="text-xs font-semibold text-slate-700">
+                Khối lượng vật <span class="font-mono text-blue-700">m</span> (kg)
+              </label>
+              <input id="num_m" type="number" step="0.1" min="0.1" max="20" value="1.0"
+                class="w-20 px-2 py-1 text-right font-mono text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            </div>
+            <input id="slider_m" type="range" step="0.1" min="0.1" max="20" value="1.0" class="w-full" />
+            <div class="flex justify-between text-[10px] font-mono text-slate-400">
+              <span>0.1 kg</span><span>10 kg</span><span>20 kg</span>
+            </div>
+          </div>
+
+          <!-- 2. Độ cứng lò xo k -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label for="num_k" class="text-xs font-semibold text-slate-700">
+                Độ cứng lò xo <span class="font-mono text-blue-700">k</span> (N/m)
+              </label>
+              <input id="num_k" type="number" step="0.5" min="1" max="200" value="25.0"
+                class="w-20 px-2 py-1 text-right font-mono text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            </div>
+            <input id="slider_k" type="range" step="0.5" min="1" max="200" value="25.0" class="w-full" />
+            <div class="flex justify-between text-[10px] font-mono text-slate-400">
+              <span>1 N/m</span><span>100 N/m</span><span>200 N/m</span>
+            </div>
+          </div>
+
+          <!-- 3. Hệ số cản b -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label for="num_b" class="text-xs font-semibold text-slate-700">
+                Hệ số cản nhớt <span class="font-mono text-blue-700">b</span> (N·s/m)
+              </label>
+              <input id="num_b" type="number" step="0.1" min="0" max="50" value="1.2"
+                class="w-20 px-2 py-1 text-right font-mono text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            </div>
+            <input id="slider_b" type="range" step="0.1" min="0" max="50" value="1.2" class="w-full" />
+            <div class="flex justify-between text-[10px] font-mono text-slate-400">
+              <span>0 (Lý tưởng)</span><span>25</span><span>50 N·s/m</span>
+            </div>
+          </div>
+
+          <!-- 4. Biên độ lực cưỡng bức F0 -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label for="num_F0" class="text-xs font-semibold text-slate-700">
+                Biên độ ngoại lực <span class="font-mono text-rose-700">F₀</span> (N)
+              </label>
+              <input id="num_F0" type="number" step="0.5" min="0" max="100" value="10.0"
+                class="w-20 px-2 py-1 text-right font-mono text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            </div>
+            <input id="slider_F0" type="range" step="0.5" min="0" max="100" value="10.0" class="w-full" />
+            <div class="flex justify-between text-[10px] font-mono text-slate-400">
+              <span>0 N (Tự do)</span><span>50 N</span><span>100 N</span>
+            </div>
+          </div>
+
+          <!-- 5. Tần số góc lực cưỡng bức w -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label for="num_w" class="text-xs font-semibold text-slate-700">
+                Tần số góc lực <span class="font-mono text-rose-700">ω</span> (rad/s)
+              </label>
+              <div class="flex items-center gap-1">
+                <button type="button" id="btnSnapWr" title="Đặt ω bằng đúng tần số cộng hưởng ωr"
+                  class="px-1.5 py-1 text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100 transition">
+                  = ω<sub>r</sub>
+                </button>
+                <input id="num_w" type="number" step="0.05" min="0.1" max="25" value="4.8"
+                  class="w-20 px-2 py-1 text-right font-mono text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+              </div>
+            </div>
+            <input id="slider_w" type="range" step="0.05" min="0.1" max="25" value="4.8" class="w-full" />
+            <div class="flex justify-between text-[10px] font-mono text-slate-400">
+              <span>0.1 rad/s</span><span>12.5</span><span>25 rad/s</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card 3: Điều kiện ban đầu & Thời gian mô phỏng -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <h2 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+            Điều kiện ban đầu &amp; Miền thời gian
+          </h2>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label for="num_x0" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                Li độ x₀ (m)
+              </label>
+              <input id="num_x0" type="number" step="0.1" min="-10" max="10" value="0.5"
+                class="w-full px-2 py-1.5 text-center font-mono text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+            <div>
+              <label for="num_v0" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                Vận tốc v₀ (m/s)
+              </label>
+              <input id="num_v0" type="number" step="0.1" min="-50" max="50" value="0.0"
+                class="w-full px-2 py-1.5 text-center font-mono text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+            <div>
+              <label for="num_Tmax" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                Thời gian T<sub>max</sub> (s)
+              </label>
+              <input id="num_Tmax" type="number" step="1" min="2" max="100" value="20"
+                class="w-full px-2 py-1.5 text-center font-mono text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-snug">
+            Bộ giải RK4 tự động điều chỉnh bước lưới Δt ≤ 0.002s để bảo toàn năng lượng và độ chính xác quỹ đạo pha.
+          </p>
+        </section>
+
+      </aside>
+
+      <!-- ==================== CỘT PHẢI: KPI, ANIMATION, 4 ĐỒ THỊ & THỰC NGHIỆM ==================== -->
+      <div class="lg:col-span-8 xl:col-span-9 space-y-5">
+
+        <!-- 1. HÀNG 4 THẺ THÔNG SỐ VẬT LÝ CỐT LÕI (KPI CARDS) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+          <!-- KPI 1: Tần số dao động riêng -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:border-blue-300 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Tần số dao động riêng</span>
+              <span class="p-1.5 rounded-lg bg-blue-50 text-blue-700 font-mono text-xs font-bold">ω₀, ω<sub>d</sub></span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span id="kpi_w0" class="text-2xl font-extrabold font-mono text-slate-900">5.000</span>
+              <span class="text-xs font-semibold text-slate-500">rad/s</span>
+            </div>
+            <div class="mt-2 pt-2 border-t border-slate-100 text-xs font-mono space-y-1 text-slate-600">
+              <div class="flex justify-between">
+                <span>Tần số f₀ = ω₀/2π:</span>
+                <strong id="kpi_f0" class="text-slate-900">0.796 Hz</strong>
+              </div>
+              <div class="flex justify-between">
+                <span>Tần số tắt dần ω<sub>d</sub>:</span>
+                <strong id="kpi_wd" class="text-blue-700">4.964 rad/s</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 2: Hệ số phẩm chất Q & Hệ số tắt dần gamma -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:border-indigo-300 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Hệ số phẩm chất</span>
+              <span class="p-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-mono text-xs font-bold">Q = √(mk)/b</span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span id="kpi_Q" class="text-2xl font-extrabold font-mono text-indigo-700">4.167</span>
+              <span class="text-xs font-semibold text-slate-500">(không thứ nguyên)</span>
+            </div>
+            <div class="mt-2 pt-2 border-t border-slate-100 text-xs font-mono space-y-1 text-slate-600">
+              <div class="flex justify-between">
+                <span>Hệ số tắt dần γ = b/2m:</span>
+                <strong id="kpi_gamma" class="text-slate-900">0.600 s⁻¹</strong>
+              </div>
+              <div class="flex justify-between">
+                <span>Chu kỳ riêng T₀:</span>
+                <strong id="kpi_T0" class="text-slate-900">1.257 s</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 3: Tần số cộng hưởng & Biên độ cực đại -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:border-rose-300 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Cộng hưởng biên độ</span>
+              <span class="p-1.5 rounded-lg bg-rose-50 text-rose-700 font-mono text-xs font-bold">ω<sub>r</sub>, A<sub>max</sub></span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span id="kpi_wr" class="text-2xl font-extrabold font-mono text-rose-700">4.927</span>
+              <span id="kpi_wr_unit" class="text-xs font-semibold text-slate-500">rad/s</span>
+            </div>
+            <div class="mt-2 pt-2 border-t border-slate-100 text-xs font-mono space-y-1 text-slate-600">
+              <div class="flex justify-between">
+                <span>Tần số f<sub>r</sub> / Biên độ A<sub>max</sub>:</span>
+                <strong id="kpi_fr_Amax" class="text-rose-700">0.784 Hz | 1.679 m</strong>
+              </div>
+              <div id="kpi_wr_note" class="text-[11px] font-sans text-slate-500 truncate" title="Điều kiện cộng hưởng: ζ < 1/√2 ≈ 0.7071">
+                Đạt cực đại nhọn tại ω<sub>r</sub> = √(ω₀² − 2γ²)
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 4: Đáp ứng trạng thái dừng tại w hiện tại -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:border-emerald-300 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Đáp ứng tại ω hiện tại</span>
+              <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-mono text-xs font-bold">A(ω), φ(ω)</span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span id="kpi_Aw" class="text-2xl font-extrabold font-mono text-emerald-700">1.637</span>
+              <span class="text-xs font-semibold text-slate-500">m</span>
+            </div>
+            <div class="mt-2 pt-2 border-t border-slate-100 text-xs font-mono space-y-1 text-slate-600">
+              <div class="flex justify-between">
+                <span>Độ lệch pha φ(ω):</span>
+                <strong id="kpi_phi" class="text-slate-900">1.242 rad (71.2°)</strong>
+              </div>
+              <div class="flex justify-between">
+                <span>Công suất tiêu tán P̄(ω):</span>
+                <strong id="kpi_Pavg" class="text-amber-700">37.05 W</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. ANIMATION CHUYỂN ĐỘNG CƠ HỌC TRỰC QUAN (ĐIỂM KHUYẾN KHÍCH MỤC 1) -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 pb-3 border-b border-slate-100">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 text-[11px] font-bold bg-amber-100 text-amber-800 rounded">
+                  Điểm khuyến khích 1
+                </span>
+                <h2 class="text-sm sm:text-base font-bold text-slate-900">
+                  Mô phỏng Chuyển động Cơ học Trực quan (Lò xo — Giảm chấn — Ngoại lực cưỡng bức)
+                </h2>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Đồng bộ thời gian thực với đồ thị x(t) và Giản đồ pha (Phase Portrait). Hiển thị vector lực F(t) và vận tốc v(t).
+              </p>
+            </div>
+
+            <!-- Bộ điều khiển Animation -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" id="btnPlayPause"
+                class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition flex items-center gap-1.5 shadow-2xs">
+                <span id="playIcon">⏸</span>
+                <span id="playText">Tạm dừng</span>
+              </button>
+              <button type="button" id="btnResetAnim"
+                class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition">
+                ↺ Về t = 0
+              </button>
+              <div class="flex items-center rounded-lg border border-slate-300 overflow-hidden text-xs font-mono">
+                <button type="button" data-speed="0.5" class="speed-btn px-2 py-1.5 bg-white text-slate-600 hover:bg-slate-100">0.5x</button>
+                <button type="button" data-speed="1" class="speed-btn px-2 py-1.5 bg-blue-600 text-white font-bold">1x</button>
+                <button type="button" data-speed="2" class="speed-btn px-2 py-1.5 bg-white text-slate-600 hover:bg-slate-100">2x</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Canvas Animation -->
+          <div class="mt-3 relative w-full h-[195px] sm:h-[210px] bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+            <canvas id="animCanvas"></canvas>
+          </div>
+
+          <!-- Thanh tua thời gian t & Thông số tức thời -->
+          <div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-3 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-xs font-bold text-slate-700">Thời gian t:</span>
+              <span id="animTimeLabel" class="font-mono text-xs font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                0.000 s / 20.000 s
+              </span>
+            </div>
+            <input id="timeScrubber" type="range" min="0" max="1000" value="0" class="w-full" />
+            <div class="flex items-center gap-3 shrink-0 font-mono text-xs">
+              <span>x(t) = <strong id="instX" class="text-blue-700">+0.500</strong> m</span>
+              <span>v(t) = <strong id="instV" class="text-emerald-700">+0.000</strong> m/s</span>
+              <span>F(t) = <strong id="instF" class="text-rose-700">+10.00</strong> N</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. HỆ THỐNG 4 ĐỒ THỊ KHOA HỌC TƯƠNG TÁC (LƯỚI 2x2) -->
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
+          <!-- ĐỒ THỊ 1: DAO ĐỘNG THEO THỜI GIAN x(t) -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">1. Đồ thị Dao động theo thời gian x(t)</h3>
+                <p class="text-[11px] text-slate-500">Nghiệm số RK4 thể hiện giai đoạn quá độ và trạng thái dừng</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 cursor-pointer select-none">
+                  <input id="chkShowVelocity" type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" />
+                  <span>Hiện v(t)</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 cursor-pointer select-none">
+                  <input id="chkShowEnvelope" type="checkbox" checked class="rounded text-blue-600 focus:ring-blue-500" />
+                  <span>Đường bao ±e<sup>-γt</sup></span>
+                </label>
+                <button type="button" data-download="chartTime" data-filename="Do_thi_dao_dong_xt_Cau10B.png"
+                  class="download-chart-btn px-2 py-1 text-xs font-semibold rounded-md border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 transition" title="Tải ảnh đồ thị PNG">
+                  ⬇ PNG
+                </button>
+              </div>
+            </div>
+            <div class="relative w-full h-[290px] mt-2">
+              <canvas id="chartTime"></canvas>
+              <div id="tooltip_chartTime" class="pointer-events-none hidden absolute z-20 bg-slate-900/95 text-white text-[11px] font-mono px-2.5 py-1.5 rounded-lg shadow-lg border border-slate-700"></div>
+            </div>
+          </div>
+
+          <!-- ĐỒ THỊ 2: GIẢN ĐỒ PHA — PHASE PORTRAIT v(t) theo x(t) -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">2. Giản đồ pha — Phase Portrait v(t) theo x(t)</h3>
+                <p class="text-[11px] text-slate-500">
+                  <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>Xuất phát (t = 0) &nbsp;
+                  <span class="inline-block w-2 h-2 rounded-full bg-rose-600 mr-1"></span>Vị trí hiện tại
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" data-download="chartPhase" data-filename="Gian_do_pha_PhasePortrait_Cau10B.png"
+                  class="download-chart-btn px-2 py-1 text-xs font-semibold rounded-md border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 transition" title="Tải ảnh đồ thị PNG">
+                  ⬇ PNG
+                </button>
+              </div>
+            </div>
+            <div class="relative w-full h-[290px] mt-2">
+              <canvas id="chartPhase"></canvas>
+              <div id="tooltip_chartPhase" class="pointer-events-none hidden absolute z-20 bg-slate-900/95 text-white text-[11px] font-mono px-2.5 py-1.5 rounded-lg shadow-lg border border-slate-700"></div>
+            </div>
+          </div>
+
+          <!-- ĐỒ THỊ 3: ĐƯỜNG CỘNG HƯỞNG A(w) & ĐÁP ỨNG PHA phi(w) -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">3. Đường cộng hưởng &amp; Đáp ứng tần số</h3>
+                <p class="text-[11px] text-slate-500">Chồng đường lưu trữ &amp; điểm dữ liệu thực nghiệm</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <div class="flex rounded-lg border border-slate-300 overflow-hidden text-xs font-semibold">
+                  <button type="button" id="tabResAmp" class="px-2.5 py-1 bg-blue-700 text-white">Biên độ A(ω)</button>
+                  <button type="button" id="tabResPhase" class="px-2.5 py-1 bg-white text-slate-700 hover:bg-slate-50">Pha φ(ω)</button>
+                </div>
+                <button type="button" data-download="chartResonance" data-filename="Duong_cong_huong_Cau10B.png"
+                  class="download-chart-btn px-2 py-1 text-xs font-semibold rounded-md border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 transition" title="Tải ảnh đồ thị PNG">
+                  ⬇ PNG
+                </button>
+              </div>
+            </div>
+            <div class="relative w-full h-[290px] mt-2">
+              <canvas id="chartResonance"></canvas>
+              <div id="tooltip_chartResonance" class="pointer-events-none hidden absolute z-20 bg-slate-900/95 text-white text-[11px] font-mono px-2.5 py-1.5 rounded-lg shadow-lg border border-slate-700"></div>
+            </div>
+          </div>
+
+          <!-- ĐỒ THỊ 4: PHỔ NĂNG LƯỢNG & BIẾN THIÊN NĂNG LƯỢNG (ĐIỂM KHUYẾN KHÍCH MỤC 2) -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded">Khuyến khích 2</span>
+                  <h3 class="text-sm font-bold text-slate-900">4. Phân tích Năng lượng &amp; Phổ FFT</h3>
+                </div>
+                <p class="text-[11px] text-slate-500">Biến thiên cơ năng E(t) và phổ năng lượng / công suất cộng hưởng</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <div class="flex rounded-lg border border-slate-300 overflow-hidden text-xs font-semibold">
+                  <button type="button" id="tabEnergyTime" class="px-2 py-1 bg-blue-700 text-white">E<sub>đ</sub>, E<sub>t</sub>, E(t)</button>
+                  <button type="button" id="tabEnergySpectrum" class="px-2 py-1 bg-white text-slate-700 hover:bg-slate-50">Phổ FFT &amp; P̄(ω)</button>
+                </div>
+                <button type="button" data-download="chartEnergy" data-filename="Pho_nang_luong_Cau10B.png"
+                  class="download-chart-btn px-2 py-1 text-xs font-semibold rounded-md border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 transition" title="Tải ảnh đồ thị PNG">
+                  ⬇ PNG
+                </button>
+              </div>
+            </div>
+            <div class="relative w-full h-[290px] mt-2">
+              <canvas id="chartEnergy"></canvas>
+              <div id="tooltip_chartEnergy" class="pointer-events-none hidden absolute z-20 bg-slate-900/95 text-white text-[11px] font-mono px-2.5 py-1.5 rounded-lg shadow-lg border border-slate-700"></div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- 4. LƯU ĐƯỜNG CỘNG HƯỞNG, ĐỐI CHIẾU THỰC NGHIỆM & XUẤT DỮ LIỆU (MỤC 3) -->
+        <section class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+
+          <!-- Cột A (7/12): Quản lý các đường cộng hưởng đã lưu -->
+          <div class="xl:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">
+                    Lưu trữ &amp; So sánh các Đường cộng hưởng (Ảnh hưởng của b và Q)
+                  </h3>
+                  <p class="text-xs text-slate-500">
+                    Lưu lại snapshot tham số hiện tại để vẽ chồng và so sánh độ sắc nét cộng hưởng trên Đồ thị 3.
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="btnSaveCurve"
+                    class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-700 text-white hover:bg-indigo-800 transition shadow-2xs">
+                    + Lưu đường cộng hưởng hiện tại
+                  </button>
+                  <button type="button" id="btnClearCurves"
+                    class="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 transition">
+                    Xóa tất cả
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bảng danh sách đường cộng hưởng đã lưu -->
+              <div class="mt-3 overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50">
+                      <th class="py-2 px-2.5">Hiện</th>
+                      <th class="py-2 px-2.5">Màu / Nhãn</th>
+                      <th class="py-2 px-2.5 font-mono">m (kg)</th>
+                      <th class="py-2 px-2.5 font-mono">k (N/m)</th>
+                      <th class="py-2 px-2.5 font-mono">b (N·s/m)</th>
+                      <th class="py-2 px-2.5 font-mono">Q</th>
+                      <th class="py-2 px-2.5 font-mono">ω<sub>r</sub> (rad/s)</th>
+                      <th class="py-2 px-2.5 font-mono">A<sub>max</sub> (m)</th>
+                      <th class="py-2 px-2.5 text-right">Xóa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="savedCurvesBody" class="divide-y divide-slate-100 font-mono">
+                    <!-- Nội dung render bằng JS -->
+                  </tbody>
+                </table>
+                <div id="emptyCurvesMsg" class="py-6 text-center text-xs text-slate-400">
+                  Chưa có đường cộng hưởng nào được lưu. Nhấn <strong>"+ Lưu đường cộng hưởng hiện tại"</strong> để lưu bộ tham số đang khảo sát.
+                </div>
+              </div>
+            </div>
+
+            <!-- Thanh nút Xuất dữ liệu & Báo cáo -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-700">Xuất dữ liệu báo cáo &amp; đối chiếu:</span>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" id="btnExportTimeCSV"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 transition">
+                  ⬇ CSV Miền thời gian x(t)
+                </button>
+                <button type="button" id="btnExportResCSV"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-800 hover:bg-indigo-100 transition">
+                  ⬇ CSV Đường cộng hưởng A(ω)
+                </button>
+                <button type="button" id="btnExportReportTXT"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition">
+                  ⬇ Báo cáo phân tích (.TXT)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột B (5/12): Đối chiếu dữ liệu thực nghiệm -->
+          <div class="xl:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900">
+                  Đối chiếu với Dữ liệu Thực nghiệm (CSV / TXT)
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Nhập file đo thực nghiệm gồm 2 cột <code class="font-mono bg-slate-100 px-1 rounded">w, A_exp</code> hoặc tạo dữ liệu đo mẫu để kiểm định mô hình lý thuyết.
+                </p>
+              </div>
+
+              <div class="mt-3 flex flex-wrap items-center gap-2">
+                <label class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 transition cursor-pointer shadow-2xs">
+                  📂 Import CSV/TXT thực nghiệm
+                  <input id="fileExpInput" type="file" accept=".csv,.txt" class="hidden" />
+                </label>
+                <button type="button" id="btnGenMockExp"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 transition">
+                  🧪 Tạo dữ liệu thực nghiệm mẫu (có nhiễu đo)
+                </button>
+                <button type="button" id="btnClearExp"
+                  class="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 transition">
+                  Xóa dữ liệu đo
+                </button>
+              </div>
+
+              <!-- Kết quả thống kê đánh giá sai số giữa Lý thuyết & Thực nghiệm -->
+              <div id="expStatsBox" class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-slate-700">Chỉ số đánh giá độ khớp mô hình:</span>
+                  <span id="expPointCount" class="text-[11px] font-mono font-semibold text-slate-500">0 điểm đo</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center font-mono">
+                  <div class="bg-white p-2 rounded-lg border border-slate-200">
+                    <div class="text-[10px] text-slate-500 font-sans">Sai số MAE</div>
+                    <div id="statMAE" class="text-sm font-bold text-slate-900 mt-0.5">—</div>
+                  </div>
+                  <div class="bg-white p-2 rounded-lg border border-slate-200">
+                    <div class="text-[10px] text-slate-500 font-sans">Sai số tương đối</div>
+                    <div id="statMRE" class="text-sm font-bold text-blue-700 mt-0.5">—</div>
+                  </div>
+                  <div class="bg-white p-2 rounded-lg border border-slate-200">
+                    <div class="text-[10px] text-slate-500 font-sans">Hệ số R²</div>
+                    <div id="statR2" class="text-sm font-bold text-emerald-700 mt-0.5">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hướng dẫn định dạng file thực nghiệm -->
+            <div class="mt-3 text-[11px] text-slate-500 bg-blue-50/60 border border-blue-100 rounded-lg p-2.5">
+              <strong class="text-blue-900">Định dạng file thực nghiệm hỗ trợ:</strong> Mỗi dòng chứa cặp giá trị tần số góc <span class="font-mono">w (rad/s)</span> và biên độ đo <span class="font-mono">A_exp (m)</span> ngăn cách bởi dấu phẩy, chấm phẩy hoặc khoảng trắng.
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast thông báo trạng thái khoa học (thay thế hoàn toàn alert/confirm) -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ==================== LOGIC TÍNH TOÁN VẬT LÝ & ĐỒ HỌA ==================== -->
+  <script>
+    /**
+     * ============================================================================
+     * ỨNG DỤNG MÔ PHỎNG & PHÂN TÍCH DAO ĐỘNG TẮT DẦN VÀ CỘNG HƯỞNG (CÂU 10B)
+     * Phương trình vi phân: m * x'' + b * x' + k * x = F0 * cos(w * t)
+     * ============================================================================
+     */
+
+    // Bảng màu phân biệt cho các đường cộng hưởng được lưu trữ
+    const SAVED_PALETTE = [
+      '#7c3aed', // Violet
+      '#059669', // Emerald
+      '#d97706', // Amber
+      '#0891b2', // Cyan
+      '#db2777', // Pink
+      '#4f46e5', // Indigo
+      '#65a30d', // Lime
+      '#ea580c'  // Orange
+    ];
+
+    // Trạng thái toàn cục của ứng dụng
+    const appState = {
+      // 5 tham số chính + điều kiện ban đầu
+      m: 1.0,
+      k: 25.0,
+      b: 1.2,
+      F0: 10.0,
+      w: 4.8,
+      x0: 0.5,
+      v0: 0.0,
+      Tmax: 20.0,
+
+      // Các đại lượng vật lý dẫn xuất
+      physics: {},
+
+      // Dữ liệu mô phỏng miền thời gian từ RK4
+      simData: {
+        t: [],
+        x: [],
+        v: [],
+        F: [],
+        Ed: [],
+        Et: [],
+        E: [],
+        dt: 0.002
+      },
+
+      // Dữ liệu quét đường cộng hưởng theo tần số w
+      resData: {
+        w: [],
+        A: [],
+        phi: [],
+        Pavg: []
+      },
+
+      // Dữ liệu phổ FFT của x(t)
+      fftData: {
+        w: [],
+        power: []
+      },
+
+      // Danh sách các đường cộng hưởng đã lưu để so sánh
+      savedCurves: [],
+      colorIndex: 0,
+
+      // Dữ liệu thực nghiệm nạp từ file hoặc sinh mẫu
+      expData: [], // Mảng các phần tử { w, A }
+
+      // Trạng thái điều khiển đồ thị
+      showVelocity: false,
+      showEnvelope: true,
+      resTab: 'amp',      // 'amp' | 'phase'
+      energyTab: 'time',  // 'time' | 'spectrum'
+
+      // Trạng thái Animation cơ học
+      anim: {
+        playing: true,
+        currentTime: 0,
+        speed: 1.0,
+        lastFrameTs: null
+      }
+    };
+
+    // ============================================================================
+    // 1. HỆ THỐNG THÔNG BÁO TOAST KHOA HỌC
+    // ============================================================================
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const styles = {
+        info: 'bg-slate-900 text-white border-slate-700',
+        success: 'bg-emerald-800 text-white border-emerald-600',
+        warning: 'bg-amber-800 text-white border-amber-600',
+        error: 'bg-rose-800 text-white border-rose-600'
+      };
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border text-xs font-medium shadow-lg transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.info}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    // ============================================================================
+    // 2. TÍNH TOÁN CÁC ĐẠI LƯỢNG VẬT LÝ LÝ THUYẾT & BỘ GIẢI RK4 + FFT
+    // ============================================================================
+    function computePhysicsMetrics() {
+      const { m, k, b, F0, w } = appState;
+
+      // Tần số góc dao động riêng không cản w0 (rad/s) và tần số f0 (Hz)
+      const w0 = Math.sqrt(k / m);
+      const f0 = w0 / (2 * Math.PI);
+      const T0 = (2 * Math.PI) / w0;
+
+      // Hệ số tắt dần gamma = b / (2m) (1/s)
+      const gamma = b / (2 * m);
+
+      // Hệ số cản tới hạn bc = 2 * sqrt(m * k) và tỉ số tắt dần zeta = b / bc
+      const bc = 2 * Math.sqrt(m * k);
+      const zeta = b / bc;
+
+      // Phân loại chế độ dao động
+      let regime = 'underdamped';
+      let wd = 0;
+      if (Math.abs(zeta - 1.0) <= 1e-4) {
+        regime = 'critically_damped';
+        wd = 0;
+      } else if (zeta < 1.0) {
+        regime = 'underdamped';
+        wd = Math.sqrt(Math.max(0, w0 * w0 - gamma * gamma));
+      } else {
+        regime = 'overdamped';
+        wd = 0;
+      }
+
+      // Hệ số phẩm chất Q = sqrt(m*k) / b = w0 / (2 * gamma)
+      const Q = b === 0 ? Infinity : Math.sqrt(m * k) / b;
+
+      // Tần số cộng hưởng biên độ wr = sqrt(w0^2 - 2*gamma^2) khi zeta < 1/sqrt(2)
+      const hasResonancePeak = (w0 * w0 > 2 * gamma * gamma);
+      let wr = 0;
+      let fr = 0;
+      let Amax = 0;
+
+      if (F0 === 0) {
+        wr = hasResonancePeak ? Math.sqrt(w0 * w0 - 2 * gamma * gamma) : 0;
+        fr = wr / (2 * Math.PI);
+        Amax = 0;
+      } else if (hasResonancePeak) {
+        wr = Math.sqrt(w0 * w0 - 2 * gamma * gamma);
+        fr = wr / (2 * Math.PI);
+        if (b === 0) {
+          Amax = Infinity;
+        } else {
+          // Amax = F0 / (b * wd)
+          Amax = F0 / (b * wd);
+        }
+      } else {
+        // Khi zeta >= 1/sqrt(2), A(w) giảm đơn điệu từ w = 0, nên cực đại tại w = 0
+        wr = 0;
+        fr = 0;
+        Amax = F0 / k;
+      }
+
+      // Biên độ A(w) và độ lệch pha phi(w) ở trạng thái dừng tại tần số w hiện tại
+      const denomSq = Math.pow(k - m * w * w, 2) + Math.pow(b * w, 2);
+      const Aw = denomSq === 0 ? Infinity : F0 / Math.sqrt(denomSq);
+      const phiRad = Math.atan2(b * w, k - m * w * w); // Trong khoảng [0, pi]
+      const phiDeg = (phiRad * 180) / Math.PI;
+
+      // Công suất tiêu tán trung bình ở trạng thái dừng P_avg(w) = 0.5 * b * w^2 * A(w)^2
+      const Pavg = isFinite(Aw) ? 0.5 * b * w * w * Aw * Aw : Infinity;
+
+      appState.physics = {
+        w0, f0, T0, gamma, bc, zeta, regime, wd, Q,
+        hasResonancePeak, wr, fr, Amax, Aw, phiRad, phiDeg, Pavg
+      };
+    }
+
+    /**
+     * Giải phương trình vi phân bằng phương pháp Runge-Kutta bậc 4 (RK4)
+     * Hệ phương trình:
+     *   dx/dt = v
+     *   dv/dt = (F0 * cos(w * t) - b * v - k * x) / m
+     */
+    function solveRK4() {
+      const { m, k, b, F0, w, x0, v0, Tmax } = appState;
+
+      // Đảm bảo bước lưới dt <= 0.002s và đủ mịn cho tần số cao
+      const maxFreq = Math.max(w, appState.physics.w0 || 5);
+      const idealDt = Math.min(0.002, (2 * Math.PI) / (maxFreq * 80));
+      const steps = Math.min(30000, Math.max(2000, Math.ceil(Tmax / idealDt)));
+      const dt = Tmax / steps;
+
+      const tArr = new Float64Array(steps + 1);
+      const xArr = new Float64Array(steps + 1);
+      const vArr = new Float64Array(steps + 1);
+      const fArr = new Float64Array(steps + 1);
+      const edArr = new Float64Array(steps + 1);
+      const etArr = new Float64Array(steps + 1);
+      const eArr = new Float64Array(steps + 1);
+
+      let t = 0;
+      let x = x0;
+      let v = v0;
+
+      // Hàm gia tốc a(t, x, v) = dv/dt
+      const accel = (ti, xi, vi) => (F0 * Math.cos(w * ti) - b * vi - k * xi) / m;
+
+      for (let i = 0; i <= steps; i++) {
+        tArr[i] = t;
+        xArr[i] = x;
+        vArr[i] = v;
+        fArr[i] = F0 * Math.cos(w * t);
+        const ed = 0.5 * m * v * v;
+        const et = 0.5 * k * x * x;
+        edArr[i] = ed;
+        etArr[i] = et;
+        eArr[i] = ed + et;
+
+        if (i === steps) break;
+
+        // 4 hệ số độ dốc RK4
+        const k1x = v;
+        const k1v = accel(t, x, v);
+
+        const k2x = v + 0.5 * dt * k1v;
+        const k2v = accel(t + 0.5 * dt, x + 0.5 * dt * k1x, v + 0.5 * dt * k1v);
+
+        const k3x = v + 0.5 * dt * k2v;
+        const k3v = accel(t + 0.5 * dt, x + 0.5 * dt * k2x, v + 0.5 * dt * k2v);
+
+        const k4x = v + dt * k3v;
+        const k4v = accel(t + dt, x + dt * k3x, v + dt * k3v);
+
+        x += (dt / 6) * (k1x + 2 * k2x + 2 * k3x + k4x);
+        v += (dt / 6) * (k1v + 2 * k2v + 2 * k3v + k4v);
+        t += dt;
+      }
+
+      appState.simData = {
+        t: tArr,
+        x: xArr,
+        v: vArr,
+        F: fArr,
+        Ed: edArr,
+        Et: etArr,
+        E: eArr,
+        dt
+      };
+    }
+
+    /**
+     * Tính phổ năng lượng FFT (Cooley-Tukey Radix-2) từ tín hiệu x(t)
+     */
+    function computeEnergySpectrumFFT() {
+      const { t, x } = appState.simData;
+      const N = 2048; // Số điểm lũy thừa 2
+      const Tmax = appState.Tmax;
+      const dtSample = Tmax / N;
+      const fs = 1 / dtSample;
+
+      const re = new Float64Array(N);
+      const im = new Float64Array(N);
+
+      // Nội suy tuyến tính x(t) lên lưới đều N điểm & áp dụng cửa sổ Hann
+      const len = t.length;
+      for (let i = 0; i < N; i++) {
+        const ti = i * dtSample;
+        const pos = (ti / Tmax) * (len - 1);
+        const idx = Math.min(len - 2, Math.floor(pos));
+        const frac = pos - idx;
+        const xi = x[idx] * (1 - frac) + x[idx + 1] * frac;
+        const hann = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (N - 1)));
+        re[i] = xi * hann;
+        im[i] = 0;
+      }
+
+      // Đảo bit (Bit-reversal permutation)
+      let j = 0;
+      for (let i = 0; i < N; i++) {
+        if (i < j) {
+          [re[i], re[j]] = [re[j], re[i]];
+          [im[i], im[j]] = [im[j], im[i]];
+        }
+        let m = N >> 1;
+        while (m >= 1 && j >= m) {
+          j -= m;
+          m >>= 1;
+        }
+        j += m;
+      }
+
+      // Biến đổi FFT cánh bướm (Butterfly)
+      for (let size = 2; size <= N; size <<= 1) {
+        const half = size >> 1;
+        const angleStep = (-2 * Math.PI) / size;
+        for (let i = 0; i < N; i += size) {
+          for (let k = 0; k < half; k++) {
+            const angle = k * angleStep;
+            const wr = Math.cos(angle);
+            const wi = Math.sin(angle);
+            const idx1 = i + k;
+            const idx2 = idx1 + half;
+            const tr = wr * re[idx2] - wi * im[idx2];
+            const ti = wr * im[idx2] + wi * re[idx2];
+            re[idx2] = re[idx1] - tr;
+            im[idx2] = im[idx1] - ti;
+            re[idx1] += tr;
+            im[idx1] += ti;
+          }
+        }
+      }
+
+      // Trích xuất nửa phổ dương đến w <= 25 rad/s
+      const wArr = [];
+      const pArr = [];
+      for (let k = 0; k < N / 2; k++) {
+        const freqHz = (k * fs) / N;
+        const omega = 2 * Math.PI * freqHz;
+        if (omega > 25.5) break;
+        const mag = (2 / N) * Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+        wArr.push(omega);
+        pArr.push(mag * mag); // Phổ năng lượng |X(w)|^2
+      }
+
+      appState.fftData = { w: wArr, power: pArr };
+    }
+
+    /**
+     * Tính đường cong cộng hưởng A(w), pha phi(w) và công suất tiêu tán P_avg(w)
+     * trên dải tần số góc w từ 0.05 đến maxW rad/s
+     */
+    function computeResonanceCurve() {
+      const { m, k, b, F0, w } = appState;
+      const { w0 } = appState.physics;
+      const maxW = Math.max(25, Math.ceil(w0 * 2.2), Math.ceil(w * 1.3));
+      const numPts = 600;
+
+      const wArr = new Float64Array(numPts);
+      const aArr = new Float64Array(numPts);
+      const phiArr = new Float64Array(numPts);
+      const pArr = new Float64Array(numPts);
+
+      // Giới hạn chiều cao đỉnh khi b = 0 để đồ thị không bị tràn vô cực
+      const capA = F0 > 0 ? Math.max((F0 / k) * 15, 10) : 1;
+
+      for (let i = 0; i < numPts; i++) {
+        const wi = 0.05 + ((maxW - 0.05) * i) / (numPts - 1);
+        const denom = Math.sqrt(Math.pow(k - m * wi * wi, 2) + Math.pow(b * wi, 2));
+        let Ai = denom < 1e-6 ? capA : F0 / denom;
+        if (Ai > capA && b === 0) Ai = capA;
+
+        const phii = Math.atan2(b * wi, k - m * wi * wi);
+        const Pi = 0.5 * b * wi * wi * Ai * Ai;
+
+        wArr[i] = wi;
+        aArr[i] = Ai;
+        phiArr[i] = phii;
+        pArr[i] = Pi;
+      }
+
+      appState.resData = { w: wArr, A: aArr, phi: phiArr, Pavg: pArr };
+    }
+
+    // ============================================================================
+    // 3. CẬP NHẬT GIAO DIỆN KPI CARDS & CARD PHÂN LOẠI CHẾ ĐỘ DAO ĐỘNG
+    // ============================================================================
+    function updateUIReadouts() {
+      const p = appState.physics;
+
+      // 1. Cập nhật Card Phân loại chế độ dao động
+      const regimeCard = document.getElementById('regimeCard');
+      const regimeBadge = document.getElementById('regimeBadge');
+      const regimeTitle = document.getElementById('regimeTitle');
+      const regimeDesc = document.getElementById('regimeDesc');
+      const zetaBar = document.getElementById('zetaBar');
+
+      document.getElementById('valBc').textContent = p.bc.toFixed(3);
+      document.getElementById('valZeta').textContent = p.zeta.toFixed(3);
+
+      // Thanh tiến trình zeta (0 -> 2 ứng với 0% -> 100%)
+      const barPct = Math.min(100, Math.max(0, (p.zeta / 2) * 100));
+      zetaBar.style.width = `${barPct}%`;
+
+      if (p.regime === 'underdamped') {
+        regimeCard.className = 'bg-white rounded-xl border-2 border-blue-500/50 p-4 shadow-sm transition-colors';
+        regimeBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-800';
+        regimeBadge.textContent = appState.b === 0 ? 'Undamped (ζ = 0)' : 'Underdamped';
+        regimeTitle.textContent = appState.b === 0
+          ? 'Dao động điều hòa không cản (Lý tưởng)'
+          : 'Dao động dưới tới hạn (Tắt dần chậm)';
+        regimeDesc.innerHTML = appState.b === 0
+          ? 'Hệ số cản b = 0 (ζ = 0). Không có tiêu tán năng lượng; dao động tự do duy trì biên độ không đổi mãi mãi.'
+          : 'Hệ số cản b &lt; b<sub>c</sub> (ζ &lt; 1). Vật dao động qua lại quanh vị trí cân bằng với biên độ tắt dần theo hàm mũ e<sup>-γt</sup>.';
+        zetaBar.className = 'h-full bg-blue-600 rounded-full transition-all duration-150';
+      } else if (p.regime === 'critically_damped') {
+        regimeCard.className = 'bg-white rounded-xl border-2 border-emerald-500/60 p-4 shadow-sm transition-colors';
+        regimeBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800';
+        regimeBadge.textContent = 'Critically Damped';
+        regimeTitle.textContent = 'Tắt dần tới hạn (b = b_c, ζ = 1)';
+        regimeDesc.innerHTML = 'Hệ trở về vị trí cân bằng nhanh nhất có thể mà không dao động vượt qua vị trí cân bằng (ứng dụng trong giảm xóc ô tô, cửa tự đóng).';
+        zetaBar.className = 'h-full bg-emerald-600 rounded-full transition-all duration-150';
+      } else {
+        regimeCard.className = 'bg-white rounded-xl border-2 border-amber-500/60 p-4 shadow-sm transition-colors';
+        regimeBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800';
+        regimeBadge.textContent = 'Overdamped';
+        regimeTitle.textContent = 'Tắt dần nhanh / Quá tới hạn (b > b_c)';
+        regimeDesc.innerHTML = 'Lực cản nhớt rất lớn (ζ &gt; 1). Hệ tiến về vị trí cân bằng chậm chạp theo tổ hợp hai hàm mũ tắt dần mà không dao động.';
+        zetaBar.className = 'h-full bg-amber-600 rounded-full transition-all duration-150';
+      }
+
+      // 2. Cập nhật 4 thẻ KPI
+      document.getElementById('kpi_w0').textContent = p.w0.toFixed(3);
+      document.getElementById('kpi_f0').textContent = `${p.f0.toFixed(3)} Hz`;
+      document.getElementById('kpi_wd').textContent = p.regime === 'underdamped'
+        ? `${p.wd.toFixed(3)} rad/s`
+        : 'Không dao động (0)';
+
+      document.getElementById('kpi_Q').textContent = isFinite(p.Q) ? p.Q.toFixed(3) : '∞ (Vô cùng)';
+      document.getElementById('kpi_gamma').textContent = `${p.gamma.toFixed(3)} s⁻¹`;
+      document.getElementById('kpi_T0').textContent = `${p.T0.toFixed(3)} s`;
+
+      const wrNoteEl = document.getElementById('kpi_wr_note');
+      if (appState.F0 === 0) {
+        document.getElementById('kpi_wr').textContent = p.hasResonancePeak ? p.wr.toFixed(3) : '0.000';
+        document.getElementById('kpi_wr_unit').textContent = 'rad/s';
+        document.getElementById('kpi_fr_Amax').textContent = 'F₀ = 0 N (Dao động tự do)';
+        wrNoteEl.textContent = 'Tăng F₀ > 0 để kích thích cộng hưởng cưỡng bức';
+      } else if (p.hasResonancePeak) {
+        document.getElementById('kpi_wr').textContent = p.wr.toFixed(3);
+        document.getElementById('kpi_wr_unit').textContent = 'rad/s';
+        const amaxStr = isFinite(p.Amax) ? `${p.Amax.toFixed(3)} m` : '∞ m';
+        document.getElementById('kpi_fr_Amax').textContent = `${p.fr.toFixed(3)} Hz | ${amaxStr}`;
+        wrNoteEl.textContent = 'Có đỉnh cộng hưởng vì ζ < 1/√2 ≈ 0.7071';
+      } else {
+        document.getElementById('kpi_wr').textContent = '0.000';
+        document.getElementById('kpi_wr_unit').textContent = 'rad/s (tại ω=0)';
+        document.getElementById('kpi_fr_Amax').textContent = `0 Hz | ${p.Amax.toFixed(3)} m`;
+        wrNoteEl.textContent = 'ζ ≥ 0.7071: Không có đỉnh cộng hưởng tại ω > 0';
+      }
+
+      document.getElementById('kpi_Aw').textContent = isFinite(p.Aw) ? p.Aw.toFixed(3) : '∞';
+      document.getElementById('kpi_phi').textContent = `${p.phiRad.toFixed(3)} rad (${p.phiDeg.toFixed(1)}°)`;
+      document.getElementById('kpi_Pavg').textContent = isFinite(p.Pavg) ? `${p.Pavg.toFixed(2)} W` : '∞ W';
+    }
+
+    // ============================================================================
+    // 4. ENGINE VẼ ĐỒ THỊ KHOA HỌC HIGH-DPI & TƯƠNG TÁC HOVER/PNG
+    // ============================================================================
+    const chartMeta = {}; // Lưu thông tin hệ trục tọa độ mỗi canvas để xử lý hover tooltip
+
+    function setupCanvasDPI(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.max(200, Math.floor(rect.width));
+      const h = Math.max(150, Math.floor(rect.height));
+      if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, w, h };
+    }
+
+    // Tính bước chia trục "đẹp" (1, 2, 5 * 10^n)
+    function niceTicks(min, max, targetTicks = 6) {
+      if (!isFinite(min) || !isFinite(max)) return [0, 1];
+      if (Math.abs(max - min) < 1e-12) {
+        const d = Math.abs(min) > 0 ? Math.abs(min) * 0.2 : 1;
+        min -= d;
+        max += d;
+      }
+      const range = max - min;
+      const roughStep = range / targetTicks;
+      const mag = Math.pow(10, Math.floor(Math.log10(roughStep)));
+      const norm = roughStep / mag;
+      let niceStep;
+      if (norm < 1.5) niceStep = 1 * mag;
+      else if (norm < 3) niceStep = 2 * mag;
+      else if (norm < 7) niceStep = 5 * mag;
+      else niceStep = 10 * mag;
+
+      const start = Math.ceil(min / niceStep) * niceStep;
+      const ticks = [];
+      for (let v = start; v <= max + niceStep * 0.001; v += niceStep) {
+        ticks.push(Math.abs(v) < 1e-12 ? 0 : v);
+      }
+      return ticks;
+    }
+
+    function formatTick(val) {
+      if (Math.abs(val) === 0) return '0';
+      if (Math.abs(val) >= 1000 || (Math.abs(val) < 0.01 && Math.abs(val) > 0)) {
+        return val.toExponential(1);
+      }
+      return Number(val.toFixed(3)).toString();
+    }
+
+    /**
+     * Vẽ khung hệ trục khoa học chuẩn (nền trắng, lưới phụ, nhãn trục, đường 0)
+     */
+    function drawScientificAxes(ctx, w, h, opts) {
+      const {
+        xMin, xMax, yMin, yMax,
+        xLabel, yLabel, title,
+        padLeft = 58, padRight = 22, padTop = 26, padBottom = 40
+      } = opts;
+
+      const plotW = w - padLeft - padRight;
+      const plotH = h - padTop - padBottom;
+
+      // Nền trắng sạch (rất quan trọng khi xuất PNG báo cáo)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+
+      // Vùng plot nhạt
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(padLeft, padTop, plotW, plotH);
+
+      const toPxX = (x) => padLeft + ((x - xMin) / (xMax - xMin)) * plotW;
+      const toPxY = (y) => padTop + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+      const xTicks = niceTicks(xMin, xMax, 7);
+      const yTicks = niceTicks(yMin, yMax, 6);
+
+      // Lưới dọc & nhãn trục X
+      ctx.font = '500 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      xTicks.forEach((tx) => {
+        const px = toPxX(tx);
+        ctx.strokeStyle = Math.abs(tx) < 1e-10 ? '#94a3b8' : '#e2e8f0';
+        ctx.lineWidth = Math.abs(tx) < 1e-10 ? 1.2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(px, padTop);
+        ctx.lineTo(px, padTop + plotH);
+        ctx.stroke();
+
+        ctx.fillStyle = '#475569';
+        ctx.fillText(formatTick(tx), px, padTop + plotH + 6);
+      });
+
+      // Lưới ngang & nhãn trục Y
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      yTicks.forEach((ty) => {
+        const py = toPxY(ty);
+        ctx.strokeStyle = Math.abs(ty) < 1e-10 ? '#94a3b8' : '#e2e8f0';
+        ctx.lineWidth = Math.abs(ty) < 1e-10 ? 1.2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(padLeft, py);
+        ctx.lineTo(padLeft + plotW, py);
+        ctx.stroke();
+
+        ctx.fillStyle = '#475569';
+        ctx.fillText(formatTick(ty), padLeft - 7, py);
+      });
+
+      // Viền khung đồ thị
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(padLeft, padTop, plotW, plotH);
+
+      // Tiêu đề nhỏ bên trong góc trên trái (để khi xuất PNG có đầy đủ tên đồ thị)
+      if (title) {
+        ctx.font = '700 12px "Inter", sans-serif';
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(title, padLeft, 6);
+      }
+
+      // Nhãn trục X
+      ctx.font = '600 11px "Inter", sans-serif';
+      ctx.fillStyle = '#334155';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(xLabel, padLeft + plotW / 2, h - 3);
+
+      // Nhãn trục Y xoay 90 độ
+      ctx.save();
+      ctx.translate(14, padTop + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      return { padLeft, padRight, padTop, padBottom, plotW, plotH, toPxX, toPxY, xMin, xMax, yMin, yMax };
+    }
+
+    // ----------------------------------------------------------------------------
+    // VẼ ĐỒ THỊ 1: DAO ĐỘNG THEO THỜI GIAN x(t)
+    // ----------------------------------------------------------------------------
+    function renderTimeChart() {
+      const canvas = document.getElementById('chartTime');
+      const { ctx, w, h } = setupCanvasDPI(canvas);
+      const { t, x, v } = appState.simData;
+      const { gamma, regime } = appState.physics;
+
+      let yMin = Infinity, yMax = -Infinity;
+      for (let i = 0; i < x.length; i++) {
+        if (x[i] < yMin) yMin = x[i];
+        if (x[i] > yMax) yMax = x[i];
+        if (appState.showVelocity) {
+          if (v[i] < yMin) yMin = v[i];
+          if (v[i] > yMax) yMax = v[i];
+        }
+      }
+      const pad = Math.max(0.1, (yMax - yMin) * 0.14);
+      yMin -= pad;
+      yMax += pad;
+
+      const ax = drawScientificAxes(ctx, w, h, {
+        xMin: 0,
+        xMax: appState.Tmax,
+        yMin,
+        yMax,
+        xLabel: 'Thời gian t (s)',
+        yLabel: appState.showVelocity ? 'Li độ x (m) / Vận tốc v (m/s)' : 'Li độ x(t) (m)',
+        title: 'Đồ thị li độ dao động x(t) theo thời gian'
+      });
+
+      chartMeta.chartTime = ax;
+
+      // Clip vùng vẽ bên trong khung trục
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(ax.padLeft, ax.padTop, ax.plotW, ax.plotH);
+      ctx.clip();
+
+      // Vẽ đường bao tắt dần +-A0 * exp(-gamma * t) nếu F0 == 0 và tắt dần
+      if (appState.showEnvelope && appState.F0 === 0 && appState.b > 0 && regime === 'underdamped') {
+        const w0 = appState.physics.w0;
+        const wd = appState.physics.wd;
+        const A0 = Math.sqrt(
+          appState.x0 * appState.x0 + Math.pow((appState.v0 + gamma * appState.x0) / wd, 2)
+        );
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([5, 4]);
+
+        // Đường bao trên
+        ctx.beginPath();
+        const stride = Math.max(1, Math.floor(t.length / 500));
+        for (let i = 0; i < t.length; i += stride) {
+          const env = A0 * Math.exp(-gamma * t[i]);
+          const px = ax.toPxX(t[i]);
+          const py = ax.toPxY(env);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Đường bao dưới
+        ctx.beginPath();
+        for (let i = 0; i < t.length; i += stride) {
+          const env = -A0 * Math.exp(-gamma * t[i]);
+          const px = ax.toPxX(t[i]);
+          const py = ax.toPxY(env);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Vẽ đường vận tốc v(t) nếu được bật
+      const stride = Math.max(1, Math.floor(t.length / 1200));
+      if (appState.showVelocity) {
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = 0; i < t.length; i += stride) {
+          const px = ax.toPxX(t[i]);
+          const py = ax.toPxY(v[i]);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+
+      // Vẽ đường li độ x(t) chính
+      ctx.strokeStyle = '#1d4ed8';
+      ctx.lineWidth = 2.1;
+      ctx.beginPath();
+      for (let i = 0; i < t.length; i += stride) {
+        const px = ax.toPxX(t[i]);
+        const py = ax.toPxY(x[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // Vẽ con trỏ thời gian hiện tại đồng bộ với Animation
+      const curT = appState.anim.currentTime;
+      const idx = Math.min(t.length - 1, Math.max(0, Math.round((curT / appState.Tmax) * (t.length - 1))));
+      const curPxX = ax.toPxX(t[idx]);
+      const curPxY = ax.toPxY(x[idx]);
+
+      ctx.strokeStyle = 'rgba(225, 29, 72, 0.55)';
+      ctx.lineWidth = 1.3;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(curPxX, ax.padTop);
+      ctx.lineTo(curPxX, ax.padTop + ax.plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Chấm đỏ tại (t, x(t))
+      ctx.fillStyle = '#e11d48';
+      ctx.beginPath();
+      ctx.arc(curPxX, curPxY, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Chú thích (Legend) góc trên phải
+      drawLegendBox(ctx, ax.padLeft + ax.plotW - 8, ax.padTop + 8, [
+        { color: '#1d4ed8', label: 'Li độ x(t)' },
+        ...(appState.showVelocity ? [{ color: '#10b981', label: 'Vận tốc v(t)' }] : []),
+        ...(appState.showEnvelope && appState.F0 === 0 && appState.b > 0 && regime === 'underdamped'
+          ? [{ color: '#f59e0b', label: 'Đường bao ±A₀e⁻ᵞᵗ', dashed: true }]
+          : [])
+      ]);
+    }
+
+    // ----------------------------------------------------------------------------
+    // VẼ ĐỒ THỊ 2: GIẢN ĐỒ PHA (PHASE PORTRAIT) v(t) THEO x(t)
+    // ----------------------------------------------------------------------------
+    function renderPhaseChart() {
+      const canvas = document.getElementById('chartPhase');
+      const { ctx, w, h } = setupCanvasDPI(canvas);
+      const { t, x, v } = appState.simData;
+
+      let xMin = Infinity, xMax = -Infinity, vMin = Infinity, vMax = -Infinity;
+      for (let i = 0; i < x.length; i++) {
+        if (x[i] < xMin) xMin = x[i];
+        if (x[i] > xMax) xMax = x[i];
+        if (v[i] < vMin) vMin = v[i];
+        if (v[i] > vMax) vMax = v[i];
+      }
+      const padX = Math.max(0.1, (xMax - xMin) * 0.14);
+      const padV = Math.max(0.1, (vMax - vMin) * 0.14);
+      xMin -= padX;
+      xMax += padX;
+      vMin -= padV;
+      vMax += padV;
+
+      const ax = drawScientificAxes(ctx, w, h, {
+        xMin,
+        xMax,
+        yMin: vMin,
+        yMax: vMax,
+        xLabel: 'Li độ x(t) (m)',
+        yLabel: 'Vận tốc v(t) (m/s)',
+        title: 'Giản đồ pha (Phase Portrait): Quỹ đạo pha v(x)'
+      });
+
+      chartMeta.chartPhase = ax;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(ax.padLeft, ax.padTop, ax.plotW, ax.plotH);
+      ctx.clip();
+
+      // Vẽ toàn bộ quỹ đạo pha mờ nhẹ làm nền tham chiếu
+      const stride = Math.max(1, Math.floor(x.length / 1500));
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.25)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let i = 0; i < x.length; i += stride) {
+        const px = ax.toPxX(x[i]);
+        const py = ax.toPxY(v[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // Vẽ phần quỹ đạo đã quét từ t = 0 đến currentTime đậm sắc nét
+      const curT = appState.anim.currentTime;
+      const curIdx = Math.min(x.length - 1, Math.max(0, Math.round((curT / appState.Tmax) * (x.length - 1))));
+      ctx.strokeStyle = '#4f46e5';
+      ctx.lineWidth = 2.1;
+      ctx.beginPath();
+      for (let i = 0; i <= curIdx; i += stride) {
+        const px = ax.toPxX(x[i]);
+        const py = ax.toPxY(v[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.lineTo(ax.toPxX(x[curIdx]), ax.toPxY(v[curIdx]));
+      ctx.stroke();
+
+      // Điểm xuất phát t = 0 (Chấm xanh ngọc)
+      const startX = ax.toPxX(x[0]);
+      const startY = ax.toPxY(v[0]);
+      ctx.fillStyle = '#059669';
+      ctx.beginPath();
+      ctx.arc(startX, startY, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Điểm hiện tại (Chấm đỏ nổi bật)
+      const curX = ax.toPxX(x[curIdx]);
+      const curY = ax.toPxY(v[curIdx]);
+      ctx.fillStyle = '#e11d48';
+      ctx.beginPath();
+      ctx.arc(curX, curY, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      ctx.restore();
+
+      drawLegendBox(ctx, ax.padLeft + ax.plotW - 8, ax.padTop + 8, [
+        { color: '#4f46e5', label: 'Quỹ đạo pha (x, v)' },
+        { color: '#059669', label: 'Xuất phát (t = 0)', dot: true },
+        { color: '#e11d48', label: 'Trạng thái hiện tại', dot: true }
+      ]);
+    }
+
+    // ----------------------------------------------------------------------------
+    // VẼ ĐỒ THỊ 3: ĐƯỜNG CỘNG HƯỞNG A(w) & ĐÁP ỨNG PHA phi(w)
+    // ----------------------------------------------------------------------------
+    function renderResonanceChart() {
+      const canvas = document.getElementById('chartResonance');
+      const { ctx, w, h } = setupCanvasDPI(canvas);
+      const { w: wArr, A: aArr, phi: phiArr } = appState.resData;
+      const isAmp = appState.resTab === 'amp';
+
+      const xMin = wArr[0];
+      const xMax = wArr[wArr.length - 1];
+      let yMin = 0;
+      let yMax = isAmp ? 0.5 : Math.PI * 1.08;
+
+      if (isAmp) {
+        for (let i = 0; i < aArr.length; i++) {
+          if (isFinite(aArr[i]) && aArr[i] > yMax) yMax = aArr[i];
+        }
+        // Xét cả các đường cộng hưởng đã lưu & điểm thực nghiệm để scale trục Y vừa vặn
+        appState.savedCurves.forEach((c) => {
+          if (c.visible && c.A) {
+            for (let i = 0; i < c.A.length; i++) {
+              if (isFinite(c.A[i]) && c.A[i] > yMax) yMax = c.A[i];
+            }
+          }
+        });
+        appState.expData.forEach((pt) => {
+          if (pt.A > yMax) yMax = pt.A;
+        });
+        yMax *= 1.15;
+      }
+
+      const ax = drawScientificAxes(ctx, w, h, {
+        xMin,
+        xMax,
+        yMin,
+        yMax,
+        xLabel: 'Tần số góc lực cưỡng bức ω (rad/s)',
+        yLabel: isAmp ? 'Biên độ trạng thái dừng A(ω) (m)' : 'Độ lệch pha φ(ω) (rad)',
+        title: isAmp
+          ? 'Đường cộng hưởng biên độ A(ω) theo tần số góc ω'
+          : 'Đường đặc trưng đáp ứng pha φ(ω) theo tần số góc ω'
+      });
+
+      chartMeta.chartResonance = ax;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(ax.padLeft, ax.padTop, ax.plotW, ax.plotH);
+      ctx.clip();
+
+      const legendItems = [];
+
+      // 1. Vẽ chồng các đường cộng hưởng đã lưu (nếu ở tab Biên độ)
+      if (isAmp) {
+        appState.savedCurves.forEach((curve) => {
+          if (!curve.visible) return;
+          ctx.strokeStyle = curve.color;
+          ctx.lineWidth = 1.7;
+          ctx.setLineDash([6, 3]);
+          ctx.beginPath();
+          for (let i = 0; i < curve.w.length; i++) {
+            const px = ax.toPxX(curve.w[i]);
+            const py = ax.toPxY(curve.A[i]);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+          legendItems.push({ color: curve.color, label: `${curve.label} (Q=${curve.QStr})`, dashed: true });
+        });
+      }
+
+      // 2. Vẽ đường cong lý thuyết hiện tại
+      const dataY = isAmp ? aArr : phiArr;
+      ctx.strokeStyle = '#1d4ed8';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      for (let i = 0; i < wArr.length; i++) {
+        const px = ax.toPxX(wArr[i]);
+        const py = ax.toPxY(dataY[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      legendItems.unshift({
+        color: '#1d4ed8',
+        label: `Hiện tại (b=${appState.b.toFixed(1)}, Q=${isFinite(appState.physics.Q) ? appState.physics.Q.toFixed(2) : '∞'})`
+      });
+
+      // 3. Đánh dấu đỉnh cộng hưởng wr (nếu có)
+      const p = appState.physics;
+      if (isAmp && appState.F0 > 0 && p.hasResonancePeak && isFinite(p.Amax)) {
+        const rx = ax.toPxX(p.wr);
+        const ry = ax.toPxY(p.Amax);
+
+        ctx.strokeStyle = 'rgba(225, 29, 72, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx, ax.padTop + ax.plotH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#e11d48';
+        ctx.beginPath();
+        ctx.arc(rx, ry, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.font = '700 11px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#be123c';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Đỉnh ωr=${p.wr.toFixed(2)}`, Math.min(rx + 7, ax.padLeft + ax.plotW - 95), Math.max(ry - 10, ax.padTop + 14));
+      }
+
+      // 4. Đường gióng thẳng đứng tại tần số w hiện tại
+      const curWx = ax.toPxX(appState.w);
+      const curWy = ax.toPxY(isAmp ? (isFinite(p.Aw) ? p.Aw : yMax) : p.phiRad);
+      ctx.strokeStyle = '#059669';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(curWx, ax.padTop);
+      ctx.lineTo(curWx, ax.padTop + ax.plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#059669';
+      ctx.beginPath();
+      ctx.arc(curWx, curWy, 4.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 5. Vẽ chồng điểm dữ liệu thực nghiệm (nếu có và đang ở tab Biên độ)
+      if (isAmp && appState.expData.length > 0) {
+        ctx.fillStyle = '#ea580c';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.2;
+        appState.expData.forEach((pt) => {
+          const ex = ax.toPxX(pt.w);
+          const ey = ax.toPxY(pt.A);
+          ctx.beginPath();
+          ctx.rect(ex - 3.5, ey - 3.5, 7, 7);
+          ctx.fill();
+          ctx.stroke();
+        });
+        legendItems.push({ color: '#ea580c', label: 'Dữ liệu thực nghiệm', dot: true });
+      }
+
+      ctx.restore();
+      drawLegendBox(ctx, ax.padLeft + ax.plotW - 8, ax.padTop + 8, legendItems.slice(0, 5));
+    }
+
+    // ----------------------------------------------------------------------------
+    // VẼ ĐỒ THỊ 4: PHỔ NĂNG LƯỢNG & BIẾN THIÊN NĂNG LƯỢNG (ĐIỂM KHUYẾN KHÍCH 2)
+    // ----------------------------------------------------------------------------
+    function renderEnergyChart() {
+      const canvas = document.getElementById('chartEnergy');
+      const { ctx, w, h } = setupCanvasDPI(canvas);
+
+      if (appState.energyTab === 'time') {
+        // TAB 1: Biến thiên Động năng Ed(t), Thế năng Et(t), Cơ năng E(t)
+        const { t, Ed, Et, E } = appState.simData;
+        let yMax = 0.1;
+        for (let i = 0; i < E.length; i++) {
+          if (E[i] > yMax) yMax = E[i];
+        }
+        yMax *= 1.15;
+
+        const ax = drawScientificAxes(ctx, w, h, {
+          xMin: 0,
+          xMax: appState.Tmax,
+          yMin: 0,
+          yMax,
+          xLabel: 'Thời gian t (s)',
+          yLabel: 'Năng lượng (J)',
+          title: 'Biến thiên Động năng Eđ(t), Thế năng Et(t) và Cơ năng E(t)'
+        });
+        chartMeta.chartEnergy = ax;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(ax.padLeft, ax.padTop, ax.plotW, ax.plotH);
+        ctx.clip();
+
+        const stride = Math.max(1, Math.floor(t.length / 1000));
+
+        // Động năng Ed(t)
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = 0; i < t.length; i += stride) {
+          const px = ax.toPxX(t[i]);
+          const py = ax.toPxY(Ed[i]);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Thế năng Et(t)
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = 0; i < t.length; i += stride) {
+          const px = ax.toPxX(t[i]);
+          const py = ax.toPxY(Et[i]);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Cơ năng toàn phần E(t) = Ed + Et
+        ctx.strokeStyle = '#1d4ed8';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let i = 0; i < t.length; i += stride) {
+          const px = ax.toPxX(t[i]);
+          const py = ax.toPxY(E[i]);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Con trỏ thời gian đồng bộ animation
+        const curT = appState.anim.currentTime;
+        const idx = Math.min(t.length - 1, Math.max(0, Math.round((curT / appState.Tmax) * (t.length - 1))));
+        const cx = ax.toPxX(t[idx]);
+        ctx.strokeStyle = 'rgba(225, 29, 72, 0.5)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(cx, ax.padTop);
+        ctx.lineTo(cx, ax.padTop + ax.plotH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.restore();
+
+        drawLegendBox(ctx, ax.padLeft + ax.plotW - 8, ax.padTop + 8, [
+          { color: '#1d4ed8', label: 'Cơ năng E(t) = Eđ + Et' },
+          { color: '#f59e0b', label: 'Động năng Eđ(t)' },
+          { color: '#10b981', label: 'Thế năng Et(t)' }
+        ]);
+      } else {
+        // TAB 2: Phổ năng lượng FFT |X(w)|^2 và Công suất tiêu tán trung bình P_avg(w)
+        const { w: fftW, power: fftP } = appState.fftData;
+        const { w: resW, Pavg } = appState.resData;
+
+        const xMin = 0;
+        const xMax = resW[resW.length - 1];
+
+        let maxFFT = 1e-9;
+        for (let i = 0; i < fftP.length; i++) if (fftP[i] > maxFFT) maxFFT = fftP[i];
+
+        let maxPavg = 1e-9;
+        for (let i = 0; i < Pavg.length; i++) if (isFinite(Pavg[i]) && Pavg[i] > maxPavg) maxPavg = Pavg[i];
+
+        // Chuẩn hóa về [0, 1] để vẽ chồng trực quan cả Phổ FFT tín hiệu và Đường cộng hưởng công suất P_avg(w)
+        const ax = drawScientificAxes(ctx, w, h, {
+          xMin,
+          xMax,
+          yMin: 0,
+          yMax: 1.15,
+          xLabel: 'Tần số góc ω (rad/s)',
+          yLabel: 'Mật độ phổ năng lượng chuẩn hóa',
+          title: 'Phổ năng lượng FFT |X(ω)|² & Công suất cộng hưởng P̄(ω)'
+        });
+        chartMeta.chartEnergy = ax;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(ax.padLeft, ax.padTop, ax.plotW, ax.plotH);
+        ctx.clip();
+
+        // 1. Vẽ đường công suất tiêu tán trung bình P_avg(w) (đạt đỉnh tại đúng w = w0)
+        if (appState.F0 > 0 && appState.b > 0) {
+          ctx.strokeStyle = '#e11d48';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 3]);
+          ctx.beginPath();
+          for (let i = 0; i < resW.length; i++) {
+            const px = ax.toPxX(resW[i]);
+            const py = ax.toPxY(Pavg[i] / maxPavg);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // 2. Vẽ vùng tô màu & đường phổ năng lượng FFT |X(w)|^2 của tín hiệu x(t)
+        ctx.fillStyle = 'rgba(29, 78, 216, 0.16)';
+        ctx.strokeStyle = '#1d4ed8';
+        ctx.lineWidth = 2.1;
+        ctx.beginPath();
+        ctx.moveTo(ax.toPxX(fftW[0]), ax.toPxY(0));
+        for (let i = 0; i < fftW.length; i++) {
+          const px = ax.toPxX(fftW[i]);
+          const py = ax.toPxY(fftP[i] / maxFFT);
+          ctx.lineTo(px, py);
+        }
+        ctx.lineTo(ax.toPxX(fftW[fftW.length - 1]), ax.toPxY(0));
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        for (let i = 0; i < fftW.length; i++) {
+          const px = ax.toPxX(fftW[i]);
+          const py = ax.toPxY(fftP[i] / maxFFT);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Đánh dấu tần số riêng w0 (đỉnh cộng hưởng năng lượng)
+        const w0x = ax.toPxX(appState.physics.w0);
+        ctx.strokeStyle = '#059669';
+        ctx.lineWidth = 1.3;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(w0x, ax.padTop);
+        ctx.lineTo(w0x, ax.padTop + ax.plotH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.font = '700 11px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#047857';
+        ctx.textAlign = 'left';
+        ctx.fillText(`ω₀=${appState.physics.w0.toFixed(2)}`, Math.min(w0x + 5, ax.padLeft + ax.plotW - 65), ax.padTop + 14);
+
+        ctx.restore();
+
+        drawLegendBox(ctx, ax.padLeft + ax.plotW - 8, ax.padTop + 8, [
+          { color: '#1d4ed8', label: 'Phổ năng lượng FFT |X(ω)|²' },
+          ...(appState.F0 > 0 && appState.b > 0
+            ? [{ color: '#e11d48', label: 'Công suất P̄(ω) (Đỉnh tại ω₀)', dashed: true }]
+            : []),
+          { color: '#059669', label: 'Tần số riêng ω₀', dashed: true }
+        ]);
+      }
+    }
+
+    // Vẽ hộp chú thích (Legend) gọn gàng trên đồ thị
+    function drawLegendBox(ctx, rightX, topY, items) {
+      if (!items || items.length === 0) return;
+      ctx.save();
+      ctx.font = '600 10.5px "Inter", sans-serif';
+      let maxTextW = 0;
+      items.forEach((it) => {
+        const tw = ctx.measureText(it.label).width;
+        if (tw > maxTextW) maxTextW = tw;
+      });
+
+      const boxW = maxTextW + 30;
+      const rowH = 16;
+      const boxH = items.length * rowH + 8;
+      const boxX = rightX - boxW;
+      const boxY = topY;
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      items.forEach((it, idx) => {
+        const cy = boxY + 12 + idx * rowH;
+        if (it.dot) {
+          ctx.fillStyle = it.color;
+          ctx.beginPath();
+          ctx.arc(boxX + 12, cy, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = it.color;
+          ctx.lineWidth = 2;
+          if (it.dashed) ctx.setLineDash([4, 2]);
+          ctx.beginPath();
+          ctx.moveTo(boxX + 6, cy);
+          ctx.lineTo(boxX + 18, cy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.fillStyle = '#1e293b';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(it.label, boxX + 23, cy);
+      });
+      ctx.restore();
+    }
+
+    // ============================================================================
+    // 5. VẼ ANIMATION CHUYỂN ĐỘNG CƠ HỌC (LÒ XO - GIẢM CHẤN - VẬT NẶNG - VECTOR)
+    // ============================================================================
+    function renderMechanicalAnimation() {
+      const canvas = document.getElementById('animCanvas');
+      const { ctx, w, h } = setupCanvasDPI(canvas);
+
+      const { t, x, v, F } = appState.simData;
+      const curT = appState.anim.currentTime;
+      const idx = Math.min(t.length - 1, Math.max(0, Math.round((curT / appState.Tmax) * (t.length - 1))));
+
+      const curX = x[idx] || 0;
+      const curV = v[idx] || 0;
+      const curF = F[idx] || 0;
+
+      // Cập nhật nhãn số liệu tức thời dưới thanh tua
+      document.getElementById('animTimeLabel').textContent = `${curT.toFixed(3)} s / ${appState.Tmax.toFixed(1)} s`;
+      document.getElementById('timeScrubber').value = Math.round((curT / appState.Tmax) * 1000);
+      document.getElementById('instX').textContent = (curX >= 0 ? '+' : '') + curX.toFixed(3);
+      document.getElementById('instV').textContent = (curV >= 0 ? '+' : '') + curV.toFixed(3);
+      document.getElementById('instF').textContent = (curF >= 0 ? '+' : '') + curF.toFixed(2);
+
+      // Tìm biên độ lớn nhất trong mô phỏng để tự động co giãn tỷ lệ thước đo hợp lý
+      let maxAbsX = 0.5;
+      for (let i = 0; i < x.length; i += 5) {
+        if (Math.abs(x[i]) > maxAbsX) maxAbsX = Math.abs(x[i]);
+      }
+      const scaleLimit = Math.ceil(maxAbsX * 1.25 * 10) / 10; // Biên độ hiển thị tối đa (m)
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Bố cục hình học
+      const wallX = 46;
+      const floorY = h - 38;
+      const centerY = floorY - 38;
+      const eqX = wallX + (w - wallX - 60) * 0.48; // Vị trí cân bằng x = 0
+      const maxPixelDisp = (w - wallX - 110) * 0.42;
+      const pxPerMeter = maxPixelDisp / scaleLimit;
+
+      const blockW = 64;
+      const blockH = 54;
+      const blockCenterX = eqX + curX * pxPerMeter;
+      const blockLeftX = blockCenterX - blockW / 2;
+
+      // 1. Vẽ nền sàn & tường cố định bên trái
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(0, floorY, w, h - floorY);
+      ctx.fillRect(0, 14, wallX, floorY - 14);
+
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(wallX, 14);
+      ctx.lineTo(wallX, floorY);
+      ctx.lineTo(w - 14, floorY);
+      ctx.stroke();
+
+      // Gạch chéo kỹ thuật trên tường cố định
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.2;
+      for (let y = 22; y < floorY; y += 12) {
+        ctx.beginPath();
+        ctx.moveTo(wallX - 12, y + 8);
+        ctx.lineTo(wallX, y);
+        ctx.stroke();
+      }
+
+      // 2. Vẽ vạch chia thước tọa độ trên sàn & mốc cân bằng x = 0
+      ctx.strokeStyle = '#059669';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(eqX, 22);
+      ctx.lineTo(eqX, floorY + 14);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.font = '700 11px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#047857';
+      ctx.textAlign = 'center';
+      ctx.fillText('x = 0 (VTCB)', eqX, 16);
+
+      // Các vạch chia mét hai bên x = 0
+      const tickStep = scaleLimit <= 1 ? 0.25 : scaleLimit <= 3 ? 0.5 : 1.0;
+      ctx.font = '500 10px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#475569';
+      for (let xm = -scaleLimit; xm <= scaleLimit + 1e-6; xm += tickStep) {
+        const tx = eqX + xm * pxPerMeter;
+        if (tx < wallX + 10 || tx > w - 20) continue;
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(tx, floorY);
+        ctx.lineTo(tx, floorY + 6);
+        ctx.stroke();
+        if (Math.abs(xm) > 1e-6) {
+          ctx.fillText(`${xm.toFixed(1)}m`, tx, floorY + 18);
+        }
+      }
+
+      // 3. Vẽ Lò xo (Spring) phía trên nối tường với vật nặng
+      const springY = centerY - 13;
+      drawSpring(ctx, wallX, springY, blockLeftX, springY, 14, 9);
+
+      // 4. Vẽ Bộ giảm chấn piston-xi lanh (Damper) phía dưới nối tường với vật nặng
+      const damperY = centerY + 14;
+      drawDamper(ctx, wallX, damperY, blockLeftX, damperY, eqX - blockW / 2);
+
+      // 5. Vẽ khối vật nặng m & bánh xe lăn không ma sát khô
+      const grad = ctx.createLinearGradient(blockLeftX, centerY - blockH / 2, blockLeftX, centerY + blockH / 2);
+      grad.addColorStop(0, '#1e40af');
+      grad.addColorStop(1, '#1d4ed8');
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.roundRect(blockLeftX, centerY - blockH / 2, blockW, blockH, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      // Bánh xe lăn dưới khối m
+      ctx.fillStyle = '#334155';
+      [blockLeftX + 15, blockLeftX + blockW - 15].forEach((wx) => {
+        ctx.beginPath();
+        ctx.arc(wx, floorY - 5, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Nhãn khối lượng trên vật
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 12px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`m=${appState.m}kg`, blockCenterX, centerY);
+
+      // 6. Vẽ Vector vận tốc v(t) (màu xanh ngọc phía trên khối vật)
+      if (Math.abs(curV) > 0.02) {
+        const vArrowLen = Math.sign(curV) * Math.min(85, Math.max(18, Math.abs(curV) * 14));
+        drawVectorArrow(
+          ctx,
+          blockCenterX,
+          centerY - blockH / 2 - 14,
+          blockCenterX + vArrowLen,
+          centerY - blockH / 2 - 14,
+          '#059669',
+          `v = ${curV.toFixed(2)} m/s`
+        );
+      }
+
+      // 7. Vẽ Vector ngoại lực cưỡng bức F(t) = F0*cos(wt) (màu đỏ cam bên phải khối vật)
+      if (appState.F0 > 0 && Math.abs(curF) > 0.05) {
+        const fArrowLen = Math.sign(curF) * Math.min(95, Math.max(20, (Math.abs(curF) / appState.F0) * 75));
+        const startFx = curF >= 0 ? blockLeftX + blockW + 4 : blockLeftX - 4;
+        drawVectorArrow(
+          ctx,
+          startFx,
+          centerY,
+          startFx + fArrowLen,
+          centerY,
+          '#e11d48',
+          `F(t) = ${curF.toFixed(1)} N`
+        );
+      }
+
+      // Chú thích ký hiệu cơ hệ góc trên phải
+      ctx.font = '600 11px "Inter", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#475569';
+      ctx.fillText(`k = ${appState.k} N/m  |  b = ${appState.b} N·s/m  |  F₀ = ${appState.F0} N`, w - 16, 16);
+    }
+
+    function drawSpring(ctx, x1, y1, x2, y2, coils, amplitude) {
+      const len = x2 - x1;
+      const lead = Math.min(14, len * 0.12);
+      const coilSpan = Math.max(10, len - 2 * lead);
+
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 + lead, y1);
+
+      for (let i = 0; i <= coils; i++) {
+        const px = x1 + lead + (coilSpan * i) / coils;
+        const py = i === 0 || i === coils ? y1 : y1 + (i % 2 === 0 ? -amplitude : amplitude);
+        ctx.lineTo(px, py);
+      }
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function drawDamper(ctx, x1, y1, x2, y2, eqLeftX) {
+      const cylStart = x1 + 16;
+      const cylLen = Math.max(28, (eqLeftX - x1) * 0.55);
+      const cylH = 14;
+
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.8;
+
+      // Thanh nối tường tới xi-lanh
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(cylStart, y1);
+      ctx.stroke();
+
+      // Vỏ xi-lanh (hở đầu phải)
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.25)';
+      ctx.fillRect(cylStart, y1 - cylH / 2, cylLen, cylH);
+      ctx.beginPath();
+      ctx.moveTo(cylStart + cylLen, y1 - cylH / 2);
+      ctx.lineTo(cylStart, y1 - cylH / 2);
+      ctx.lineTo(cylStart, y1 + cylH / 2);
+      ctx.lineTo(cylStart + cylLen, y1 + cylH / 2);
+      ctx.stroke();
+
+      // Cần piston nối từ khối vật nặng vào trong xi-lanh
+      const pistonHeadX = Math.max(cylStart + 6, Math.min(cylStart + cylLen + 15, x2 - cylLen * 0.55));
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(pistonHeadX, y2);
+      ctx.moveTo(pistonHeadX, y2 - cylH / 2 + 2);
+      ctx.lineTo(pistonHeadX, y2 + cylH / 2 - 2);
+      ctx.stroke();
+    }
+
+    function drawVectorArrow(ctx, x1, y1, x2, y2, color, label) {
+      const headLen = 8;
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2.4;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.font = '700 10.5px "JetBrains Mono", monospace';
+      ctx.textAlign = x2 >= x1 ? 'left' : 'right';
+      ctx.fillText(label, x2 >= x1 ? x2 + 5 : x2 - 5, y2 - 6);
+    }
+
+    // ============================================================================
+    // 6. VÒNG LẶP ANIMATION 60 FPS
+    // ============================================================================
+    function animationLoop(timestamp) {
+      if (!appState.anim.lastFrameTs) appState.anim.lastFrameTs = timestamp;
+      const dtReal = (timestamp - appState.anim.lastFrameTs) / 1000;
+      appState.anim.lastFrameTs = timestamp;
+
+      if (appState.anim.playing && dtReal < 0.2) {
+        appState.anim.currentTime += dtReal * appState.anim.speed;
+        if (appState.anim.currentTime >= appState.Tmax) {
+          appState.anim.currentTime = 0; // Lặp mượt từ đầu
+        }
+        renderMechanicalAnimation();
+        renderTimeChart();
+        renderPhaseChart();
+        if (appState.energyTab === 'time') {
+          renderEnergyChart();
+        }
+      }
+
+      requestAnimationFrame(animationLoop);
+    }
+
+    // ============================================================================
+    // 7. QUẢN LÝ LƯU ĐƯỜNG CỘNG HƯỞNG, THỰC NGHIỆM & XUẤT DỮ LIỆU
+    // ============================================================================
+    function renderSavedCurvesTable() {
+      const tbody = document.getElementById('savedCurvesBody');
+      const emptyMsg = document.getElementById('emptyCurvesMsg');
+      tbody.innerHTML = '';
+
+      if (appState.savedCurves.length === 0) {
+        emptyMsg.classList.remove('hidden');
+        return;
+      }
+      emptyMsg.classList.add('hidden');
+
+      appState.savedCurves.forEach((c, index) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2 px-2.5">
+            <input type="checkbox" ${c.visible ? 'checked' : ''} data-idx="${index}" class="toggle-curve-chk rounded text-blue-600 cursor-pointer" />
+          </td>
+          <td class="py-2 px-2.5 font-sans font-semibold text-slate-800 flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full shrink-0" style="background:${c.color}"></span>
+            <span>${c.label}</span>
+          </td>
+          <td class="py-2 px-2.5">${c.m.toFixed(1)}</td>
+          <td class="py-2 px-2.5">${c.k.toFixed(1)}</td>
+          <td class="py-2 px-2.5">${c.b.toFixed(2)}</td>
+          <td class="py-2 px-2.5 font-bold text-indigo-700">${c.QStr}</td>
+          <td class="py-2 px-2.5">${c.wrStr}</td>
+          <td class="py-2 px-2.5 font-bold text-rose-700">${c.AmaxStr}</td>
+          <td class="py-2 px-2.5 text-right">
+            <button type="button" data-idx="${index}" class="del-curve-btn text-slate-400 hover:text-rose-600 font-bold px-1.5 py-0.5 rounded">✕</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Gắn sự kiện bật/tắt & xóa từng đường
+      tbody.querySelectorAll('.toggle-curve-chk').forEach((chk) => {
+        chk.addEventListener('change', (e) => {
+          const i = Number(e.target.dataset.idx);
+          appState.savedCurves[i].visible = e.target.checked;
+          renderResonanceChart();
+        });
+      });
+
+      tbody.querySelectorAll('.del-curve-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const i = Number(e.target.dataset.idx);
+          appState.savedCurves.splice(i, 1);
+          renderSavedCurvesTable();
+          renderResonanceChart();
+          showToast('Đã xóa đường cộng hưởng khỏi danh sách so sánh.', 'info');
+        });
+      });
+    }
+
+    function saveCurrentResonanceCurve() {
+      const p = appState.physics;
+      const color = SAVED_PALETTE[appState.colorIndex % SAVED_PALETTE.length];
+      appState.colorIndex++;
+
+      const curve = {
+        label: `Đường #${appState.colorIndex}`,
+        color,
+        visible: true,
+        m: appState.m,
+        k: appState.k,
+        b: appState.b,
+        F0: appState.F0,
+        QStr: isFinite(p.Q) ? p.Q.toFixed(2) : '∞',
+        wrStr: p.hasResonancePeak ? p.wr.toFixed(2) : '0.00',
+        AmaxStr: isFinite(p.Amax) ? p.Amax.toFixed(3) : '∞',
+        w: Float64Array.from(appState.resData.w),
+        A: Float64Array.from(appState.resData.A)
+      };
+
+      appState.savedCurves.push(curve);
+      renderSavedCurvesTable();
+      renderResonanceChart();
+      showToast(`Đã lưu "${curve.label}" (b = ${curve.b} N·s/m, Q = ${curve.QStr}) lên đồ thị cộng hưởng.`, 'success');
+    }
+
+    /**
+     * Tính chỉ số đánh giá sai số giữa dữ liệu thực nghiệm và mô hình lý thuyết hiện tại
+     */
+    function evaluateExperimentalFit() {
+      const exp = appState.expData;
+      const countEl = document.getElementById('expPointCount');
+      const maeEl = document.getElementById('statMAE');
+      const mreEl = document.getElementById('statMRE');
+      const r2El = document.getElementById('statR2');
+
+      if (!exp || exp.length === 0) {
+        countEl.textContent = '0 điểm đo';
+        maeEl.textContent = '—';
+        mreEl.textContent = '—';
+        r2El.textContent = '—';
+        return;
+      }
+
+      const { m, k, b, F0 } = appState;
+      let sumAbsErr = 0;
+      let sumRelErr = 0;
+      let sumExp = 0;
+
+      const preds = exp.map((pt) => {
+        const denom = Math.sqrt(Math.pow(k - m * pt.w * pt.w, 2) + Math.pow(b * pt.w, 2));
+        const aTheo = denom > 1e-9 ? F0 / denom : 0;
+        const absErr = Math.abs(pt.A - aTheo);
+        sumAbsErr += absErr;
+        if (Math.abs(pt.A) > 1e-6) {
+          sumRelErr += (absErr / Math.abs(pt.A)) * 100;
+        }
+        sumExp += pt.A;
+        return aTheo;
+      });
+
+      const meanExp = sumExp / exp.length;
+      let ssRes = 0;
+      let ssTot = 0;
+      for (let i = 0; i < exp.length; i++) {
+        ssRes += Math.pow(exp[i].A - preds[i], 2);
+        ssTot += Math.pow(exp[i].A - meanExp, 2);
+      }
+
+      const mae = sumAbsErr / exp.length;
+      const mre = sumRelErr / exp.length;
+      const r2 = ssTot > 1e-12 ? Math.max(0, 1 - ssRes / ssTot) : 1;
+
+      countEl.textContent = `${exp.length} điểm đo`;
+      maeEl.textContent = `${mae.toFixed(4)} m`;
+      mreEl.textContent = `${mre.toFixed(2)} %`;
+      r2El.textContent = r2.toFixed(4);
+    }
+
+    function generateMockExperimentalData() {
+      const { m, k, b, F0 } = appState;
+      if (F0 === 0) {
+        showToast('Hãy đặt F₀ > 0 N để tạo dữ liệu thực nghiệm cộng hưởng cưỡng bức!', 'warning');
+        return;
+      }
+      const w0 = appState.physics.w0;
+      const wStart = Math.max(0.5, w0 * 0.35);
+      const wEnd = Math.min(24.5, w0 * 1.75);
+      const numPts = 24;
+      const points = [];
+
+      for (let i = 0; i < numPts; i++) {
+        const wi = wStart + ((wEnd - wStart) * i) / (numPts - 1);
+        const denom = Math.sqrt(Math.pow(k - m * wi * wi, 2) + Math.pow(b * wi, 2));
+        const aExact = denom > 1e-6 ? F0 / denom : 0;
+        // Nhiễu đo thực nghiệm ngẫu nhiên +-3.5%
+        const noise = 1 + (Math.random() - 0.5) * 0.07;
+        points.push({
+          w: Number(wi.toFixed(3)),
+          A: Math.max(0, Number((aExact * noise).toFixed(4)))
+        });
+      }
+
+      appState.expData = points;
+      evaluateExperimentalFit();
+      renderResonanceChart();
+      showToast(`Đã tạo ${numPts} điểm đo thực nghiệm mô phỏng quanh vùng cộng hưởng!`, 'success');
+    }
+
+    function parseExperimentalCSV(text) {
+      const lines = text.split(/\r?\n/);
+      const parsed = [];
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line || line.startsWith('#')) continue;
+        const parts = line.split(/[,;\t\s]+/).map(Number);
+        if (parts.length >= 2 && isFinite(parts[0]) && isFinite(parts[1])) {
+          parsed.push({ w: parts[0], A: parts[1] });
+        }
+      }
+      if (parsed.length === 0) {
+        showToast('Không tìm thấy dữ liệu số hợp lệ (cột w, A_exp) trong file!', 'error');
+        return;
+      }
+      appState.expData = parsed;
+      evaluateExperimentalFit();
+      renderResonanceChart();
+      showToast(`Đã nạp thành công ${parsed.length} điểm dữ liệu thực nghiệm!`, 'success');
+    }
+
+    // Tải file văn bản / CSV xuống máy người dùng
+    function triggerDownloadText(filename, content, mime = 'text/csv;charset=utf-8;') {
+      const blob = new Blob(['\uFEFF' + content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================================================
+    // 8. ĐỒNG BỘ THAM SỐ & CẬP NHẬT TOÀN HỆ THỐNG REAL-TIME
+    // ============================================================================
+    function recalculateAndRenderAll(resetTime = false) {
+      computePhysicsMetrics();
+      solveRK4();
+      computeEnergySpectrumFFT();
+      computeResonanceCurve();
+
+      if (resetTime || appState.anim.currentTime > appState.Tmax) {
+        appState.anim.currentTime = 0;
+      }
+
+      updateUIReadouts();
+      evaluateExperimentalFit();
+      renderMechanicalAnimation();
+      renderTimeChart();
+      renderPhaseChart();
+      renderResonanceChart();
+      renderEnergyChart();
+    }
+
+    function setParameterValues(params, resetTime = false) {
+      const keys = ['m', 'k', 'b', 'F0', 'w', 'x0', 'v0', 'Tmax'];
+      keys.forEach((key) => {
+        if (params[key] !== undefined) {
+          appState[key] = Number(params[key]);
+          const numEl = document.getElementById(`num_${key}`);
+          const sldEl = document.getElementById(`slider_${key}`);
+          if (numEl) numEl.value = appState[key];
+          if (sldEl) sldEl.value = appState[key];
+        }
+      });
+      recalculateAndRenderAll(resetTime);
+    }
+
+    // ============================================================================
+    // 9. KHỞI TẠO SỰ KIỆN & TOOLTIP TƯƠNG TÁC TRÊN ĐỒ THỊ
+    // ============================================================================
+    function setupChartTooltips() {
+      const configs = [
+        {
+          id: 'chartTime',
+          getText: (xVal) => {
+            const { t, x, v } = appState.simData;
+            const idx = Math.min(t.length - 1, Math.max(0, Math.round((xVal / appState.Tmax) * (t.length - 1))));
+            return `t = ${t[idx].toFixed(3)} s | x = ${x[idx].toFixed(4)} m | v = ${v[idx].toFixed(4)} m/s`;
+          }
+        },
+        {
+          id: 'chartPhase',
+          getText: (xVal, yVal) => `x = ${xVal.toFixed(4)} m | v = ${yVal.toFixed(4)} m/s`
+        },
+        {
+          id: 'chartResonance',
+          getText: (wVal) => {
+            const { m, k, b, F0 } = appState;
+            const denom = Math.sqrt(Math.pow(k - m * wVal * wVal, 2) + Math.pow(b * wVal, 2));
+            const A = denom > 1e-6 ? F0 / denom : Infinity;
+            const phi = (Math.atan2(b * wVal, k - m * wVal * wVal) * 180) / Math.PI;
+            return `ω = ${wVal.toFixed(3)} rad/s | A(ω) = ${isFinite(A) ? A.toFixed(4) : '∞'} m | φ = ${phi.toFixed(1)}°`;
+          }
+        },
+        {
+          id: 'chartEnergy',
+          getText: (xVal) => {
+            if (appState.energyTab === 'time') {
+              const { t, Ed, Et, E } = appState.simData;
+              const idx = Math.min(t.length - 1, Math.max(0, Math.round((xVal / appState.Tmax) * (t.length - 1))));
+              return `t = ${t[idx].toFixed(3)} s | E = ${E[idx].toFixed(3)} J (Eđ=${Ed[idx].toFixed(2)}, Et=${Et[idx].toFixed(2)})`;
+            }
+            return `Tần số góc ω = ${xVal.toFixed(3)} rad/s (f = ${(xVal / (2 * Math.PI)).toFixed(3)} Hz)`;
+          }
+        }
+      ];
+
+      configs.forEach(({ id, getText }) => {
+        const canvas = document.getElementById(id);
+        const tooltip = document.getElementById(`tooltip_${id}`);
+
+        canvas.addEventListener('mousemove', (e) => {
+          const ax = chartMeta[id];
+          if (!ax) return;
+          const rect = canvas.getBoundingClientRect();
+          const mx = e.clientX - rect.left;
+          const my = e.clientY - rect.top;
+
+          if (mx < ax.padLeft || mx > ax.padLeft + ax.plotW || my < ax.padTop || my > ax.padTop + ax.plotH) {
+            tooltip.classList.add('hidden');
+            return;
+          }
+
+          const xVal = ax.xMin + ((mx - ax.padLeft) / ax.plotW) * (ax.xMax - ax.xMin);
+          const yVal = ax.yMax - ((my - ax.padTop) / ax.plotH) * (ax.yMax - ax.yMin);
+
+          tooltip.textContent = getText(xVal, yVal);
+          tooltip.classList.remove('hidden');
+
+          const tipX = Math.min(rect.width - tooltip.offsetWidth - 10, mx + 12);
+          const tipY = Math.max(8, my - 28);
+          tooltip.style.left = `${Math.max(8, tipX)}px`;
+          tooltip.style.top = `${tipY}px`;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+          tooltip.classList.add('hidden');
+        });
+      });
+    }
+
+    function bindEvents() {
+      // Đồng bộ slider <-> number input cho 5 tham số chính
+      const paramConfigs = [
+        { key: 'm', min: 0.1, max: 20 },
+        { key: 'k', min: 1, max: 200 },
+        { key: 'b', min: 0, max: 50 },
+        { key: 'F0', min: 0, max: 100 },
+        { key: 'w', min: 0.1, max: 25 }
+      ];
+
+      paramConfigs.forEach(({ key, min, max }) => {
+        const sld = document.getElementById(`slider_${key}`);
+        const num = document.getElementById(`num_${key}`);
+
+        sld.addEventListener('input', () => {
+          const val = parseFloat(sld.value);
+          num.value = val;
+          appState[key] = val;
+          recalculateAndRenderAll(false);
+        });
+
+        num.addEventListener('input', () => {
+          let val = parseFloat(num.value);
+          if (!isFinite(val)) return;
+          val = Math.min(max, Math.max(min, val));
+          sld.value = val;
+          appState[key] = val;
+          recalculateAndRenderAll(false);
+        });
+      });
+
+      // Điều kiện ban đầu x0, v0, Tmax
+      [
+        { key: 'x0', min: -20, max: 20 },
+        { key: 'v0', min: -100, max: 100 },
+        { key: 'Tmax', min: 1, max: 120 }
+      ].forEach(({ key, min, max }) => {
+        const el = document.getElementById(`num_${key}`);
+        el.addEventListener('input', () => {
+          let val = parseFloat(el.value);
+          if (!isFinite(val)) return;
+          val = Math.min(max, Math.max(min, val));
+          appState[key] = val;
+          recalculateAndRenderAll(key === 'Tmax');
+        });
+      });
+
+      // Nút đặt nhanh w = wr (cộng hưởng)
+      document.getElementById('btnSnapWr').addEventListener('click', () => {
+        const wr = appState.physics.hasResonancePeak ? appState.physics.wr : appState.physics.w0;
+        const clamped = Math.min(25, Math.max(0.1, Number(wr.toFixed(3))));
+        setParameterValues({ w: clamped }, false);
+        showToast(`Đã điều chỉnh tần số ngoại lực ω = ${clamped} rad/s (tại đỉnh cộng hưởng)!`, 'info');
+      });
+
+      // Các nút Preset kịch bản mẫu nhanh
+      const PRESETS = {
+        sharp_resonance: { m: 1.0, k: 25.0, b: 0.4, F0: 10.0, w: 4.99, x0: 0.0, v0: 0.0, Tmax: 25.0 },
+        underdamped: { m: 1.0, k: 25.0, b: 1.2, F0: 10.0, w: 4.8, x0: 0.5, v0: 0.0, Tmax: 20.0 },
+        critically_damped: { m: 1.0, k: 25.0, b: 10.0, F0: 0.0, w: 5.0, x0: 1.0, v0: 0.0, Tmax: 6.0 },
+        overdamped: { m: 1.0, k: 25.0, b: 22.0, F0: 0.0, w: 5.0, x0: 1.0, v0: 0.0, Tmax: 10.0 },
+        free_damped: { m: 1.0, k: 25.0, b: 0.8, F0: 0.0, w: 5.0, x0: 1.0, v0: 0.0, Tmax: 15.0 }
+      };
+
+      document.querySelectorAll('.preset-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.preset;
+          if (PRESETS[key]) {
+            setParameterValues(PRESETS[key], true);
+            showToast(`Đã nạp kịch bản: ${btn.textContent.trim()}`, 'success');
+          }
+        });
+      });
+
+      // Điều khiển Animation Play/Pause, Reset, Tốc độ, Thanh tua
+      document.getElementById('btnPlayPause').addEventListener('click', () => {
+        appState.anim.playing = !appState.anim.playing;
+        appState.anim.lastFrameTs = null;
+        document.getElementById('playIcon').textContent = appState.anim.playing ? '⏸' : '▶';
+        document.getElementById('playText').textContent = appState.anim.playing ? 'Tạm dừng' : 'Tiếp tục';
+      });
+
+      document.getElementById('btnResetAnim').addEventListener('click', () => {
+        appState.anim.currentTime = 0;
+        renderMechanicalAnimation();
+        renderTimeChart();
+        renderPhaseChart();
+        if (appState.energyTab === 'time') renderEnergyChart();
+      });
+
+      document.querySelectorAll('.speed-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          appState.anim.speed = parseFloat(btn.dataset.speed);
+          document.querySelectorAll('.speed-btn').forEach((b) => {
+            b.className = 'speed-btn px-2 py-1.5 bg-white text-slate-600 hover:bg-slate-100';
+          });
+          btn.className = 'speed-btn px-2 py-1.5 bg-blue-600 text-white font-bold';
+        });
+      });
+
+      document.getElementById('timeScrubber').addEventListener('input', (e) => {
+        const frac = Number(e.target.value) / 1000;
+        appState.anim.currentTime = frac * appState.Tmax;
+        renderMechanicalAnimation();
+        renderTimeChart();
+        renderPhaseChart();
+        if (appState.energyTab === 'time') renderEnergyChart();
+      });
+
+      // Checkbox Đồ thị 1
+      document.getElementById('chkShowVelocity').addEventListener('change', (e) => {
+        appState.showVelocity = e.target.checked;
+        renderTimeChart();
+      });
+
+      document.getElementById('chkShowEnvelope').addEventListener('change', (e) => {
+        appState.showEnvelope = e.target.checked;
+        renderTimeChart();
+      });
+
+      // Tab Đồ thị 3 (Biên độ / Pha)
+      document.getElementById('tabResAmp').addEventListener('click', () => {
+        appState.resTab = 'amp';
+        document.getElementById('tabResAmp').className = 'px-2.5 py-1 bg-blue-700 text-white';
+        document.getElementById('tabResPhase').className = 'px-2.5 py-1 bg-white text-slate-700 hover:bg-slate-50';
+        renderResonanceChart();
+      });
+
+      document.getElementById('tabResPhase').addEventListener('click', () => {
+        appState.resTab = 'phase';
+        document.getElementById('tabResPhase').className = 'px-2.5 py-1 bg-blue-700 text-white';
+        document.getElementById('tabResAmp').className = 'px-2.5 py-1 bg-white text-slate-700 hover:bg-slate-50';
+        renderResonanceChart();
+      });
+
+      // Tab Đồ thị 4 (Năng lượng theo thời gian / Phổ FFT & P_avg)
+      document.getElementById('tabEnergyTime').addEventListener('click', () => {
+        appState.energyTab = 'time';
+        document.getElementById('tabEnergyTime').className = 'px-2 py-1 bg-blue-700 text-white';
+        document.getElementById('tabEnergySpectrum').className = 'px-2 py-1 bg-white text-slate-700 hover:bg-slate-50';
+        renderEnergyChart();
+      });
+
+      document.getElementById('tabEnergySpectrum').addEventListener('click', () => {
+        appState.energyTab = 'spectrum';
+        document.getElementById('tabEnergySpectrum').className = 'px-2 py-1 bg-blue-700 text-white';
+        document.getElementById('tabEnergyTime').className = 'px-2 py-1 bg-white text-slate-700 hover:bg-slate-50';
+        renderEnergyChart();
+      });
+
+      // Nút tải ảnh PNG cho từng đồ thị
+      document.querySelectorAll('.download-chart-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const canvas = document.getElementById(btn.dataset.download);
+          const link = document.createElement('a');
+          link.download = btn.dataset.filename || 'do_thi_vat_ly.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          showToast(`Đã tải ảnh đồ thị "${link.download}"!`, 'success');
+        });
+      });
+
+      // Lưu / Xóa đường cộng hưởng
+      document.getElementById('btnSaveCurve').addEventListener('click', saveCurrentResonanceCurve);
+      document.getElementById('btnClearCurves').addEventListener('click', () => {
+        appState.savedCurves = [];
+        renderSavedCurvesTable();
+        renderResonanceChart();
+        showToast('Đã xóa toàn bộ các đường cộng hưởng đã lưu.', 'info');
+      });
+
+      // Thực nghiệm: Import file CSV/TXT, Tạo mẫu, Xóa
+      document.getElementById('fileExpInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => parseExperimentalCSV(ev.target.result);
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('btnGenMockExp').addEventListener('click', generateMockExperimentalData);
+
+      document.getElementById('btnClearExp').addEventListener('click', () => {
+        appState.expData = [];
+        evaluateExperimentalFit();
+        renderResonanceChart();
+        showToast('Đã xóa dữ liệu thực nghiệm.', 'info');
+      });
+
+      // Xuất CSV Miền thời gian
+      document.getElementById('btnExportTimeCSV').addEventListener('click', () => {
+        const { t, x, v, F, Ed, Et, E } = appState.simData;
+        const lines = ['t(s),x(m),v(m/s),F_ext(N),Ed(J),Et(J),E_total(J)'];
+        const step = Math.max(1, Math.floor(t.length / 2000));
+        for (let i = 0; i < t.length; i += step) {
+          lines.push(
+            `${t[i].toFixed(5)},${x[i].toFixed(6)},${v[i].toFixed(6)},${F[i].toFixed(5)},${Ed[i].toFixed(6)},${Et[i].toFixed(6)},${E[i].toFixed(6)}`
+          );
+        }
+        triggerDownloadText('du_lieu_dao_dong_mien_thoi_gian_Cau10B.csv', lines.join('\n'));
+        showToast('Đã xuất file CSV dữ liệu miền thời gian!', 'success');
+      });
+
+      // Xuất CSV Đường cộng hưởng
+      document.getElementById('btnExportResCSV').addEventListener('click', () => {
+        const { w, A, phi, Pavg } = appState.resData;
+        const savedHeaders = appState.savedCurves.map((c) => `,A_${c.label.replace(/\s+/g, '_')}_(b=${c.b})`);
+        const lines = [`w(rad/s),f(Hz),A_current(m),phi(rad),phi(deg),P_avg(W)${savedHeaders.join('')}`];
+
+        for (let i = 0; i < w.length; i++) {
+          const fHz = w[i] / (2 * Math.PI);
+          const phiDeg = (phi[i] * 180) / Math.PI;
+          const savedVals = appState.savedCurves.map((c) => `,${c.A[i] !== undefined ? c.A[i].toFixed(6) : ''}`);
+          lines.push(
+            `${w[i].toFixed(4)},${fHz.toFixed(4)},${A[i].toFixed(6)},${phi[i].toFixed(5)},${phiDeg.toFixed(2)},${Pavg[i].toFixed(5)}${savedVals.join('')}`
+          );
+        }
+        triggerDownloadText('duong_cong_huong_A_w_Cau10B.csv', lines.join('\n'));
+        showToast('Đã xuất file CSV đường cộng hưởng và các đường đã lưu!', 'success');
+      });
+
+      // Xuất Báo cáo tổng hợp phân tích (.TXT)
+      document.getElementById('btnExportReportTXT').addEventListener('click', () => {
+        const p = appState.physics;
+        const report = [
+          '========================================================================',
+          'BÁO CÁO PHÂN TÍCH DAO ĐỘNG TẮT DẦN VÀ CỘNG HƯỞNG (CÂU 10B)',
+          'Môn học: Tin học Vật lý Kỹ thuật — Học kỳ 261',
+          'Phương trình vi phân: m*x\'\' + b*x\' + k*x = F0*cos(w*t)',
+          '========================================================================',
+          '',
+          '1. THÔNG SỐ ĐẦU VÀO HỆ DAO ĐỘNG:',
+          `   - Khối lượng vật nặng (m)         : ${appState.m} kg`,
+          `   - Độ cứng lò xo (k)               : ${appState.k} N/m`,
+          `   - Hệ số cản nhớt (b)              : ${appState.b} N.s/m`,
+          `   - Biên độ lực cưỡng bức (F0)      : ${appState.F0} N`,
+          `   - Tần số góc lực cưỡng bức (w)    : ${appState.w} rad/s`,
+          `   - Điều kiện ban đầu               : x0 = ${appState.x0} m, v0 = ${appState.v0} m/s`,
+          '',
+          '2. KẾT QUẢ TÍNH TOÁN CÁC ĐẠI LƯỢNG VẬT LÝ ĐẶC TRƯNG:',
+          `   - Tần số góc dao động riêng (w0)  : ${p.w0.toFixed(4)} rad/s (f0 = ${p.f0.toFixed(4)} Hz)`,
+          `   - Hệ số tắt dần (gamma = b/2m)    : ${p.gamma.toFixed(4)} s^-1`,
+          `   - Hệ số cản tới hạn (bc)          : ${p.bc.toFixed(4)} N.s/m`,
+          `   - Tỉ số tắt dần (zeta = b/bc)     : ${p.zeta.toFixed(4)}`,
+          `   - Phân loại chế độ dao động       : ${p.regime.toUpperCase()}`,
+          `   - Tần số riêng tắt dần (wd)       : ${p.regime === 'underdamped' ? p.wd.toFixed(4) + ' rad/s' : 'Không dao động'}`,
+          `   - Hệ số phẩm chất (Q)             : ${isFinite(p.Q) ? p.Q.toFixed(4) : 'Vô cùng'}`,
+          `   - Tần số cộng hưởng biên độ (wr)  : ${p.hasResonancePeak ? p.wr.toFixed(4) + ' rad/s' : '0 rad/s (zeta >= 0.7071)'}`,
+          `   - Biên độ cực đại (A_max)         : ${isFinite(p.Amax) ? p.Amax.toFixed(4) + ' m' : 'Vô cùng'}`,
+          `   - Biên độ dừng tại w hiện tại     : ${isFinite(p.Aw) ? p.Aw.toFixed(4) + ' m' : 'Vô cùng'}`,
+          `   - Độ lệch pha phi(w)              : ${p.phiRad.toFixed(4)} rad (${p.phiDeg.toFixed(2)} độ)`,
+          `   - Công suất tiêu tán trung bình   : ${isFinite(p.Pavg) ? p.Pavg.toFixed(4) + ' W' : 'Vô cùng'}`,
+          '',
+          '3. DANH SÁCH ĐƯỜNG CỘNG HƯỞNG ĐÃ LƯU SO SÁNH:',
+          ...(appState.savedCurves.length === 0
+            ? ['   (Chưa có đường cộng hưởng nào được lưu)']
+            : appState.savedCurves.map(
+                (c) => `   - ${c.label}: m=${c.m}kg, k=${c.k}N/m, b=${c.b}N.s/m | Q=${c.QStr}, wr=${c.wrStr} rad/s, Amax=${c.AmaxStr} m`
+              )),
+          '========================================================================'
+        ].join('\n');
+
+        triggerDownloadText('Bao_cao_phan_tich_Cau10B_HK261.txt', report, 'text/plain;charset=utf-8;');
+        showToast('Đã xuất Báo cáo phân tích tổng hợp (.TXT)!', 'success');
+      });
+
+      // Tự động vẽ lại sắc nét khi thay đổi kích thước màn hình
+      window.addEventListener('resize', () => {
+        renderMechanicalAnimation();
+        renderTimeChart();
+        renderPhaseChart();
+        renderResonanceChart();
+        renderEnergyChart();
+      });
+    }
+
+    // ============================================================================
+    // 10. KHỞI CHẠY ỨNG DỤNG KHI TRANG TẢI XONG
+    // ============================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      bindEvents();
+      setupChartTooltips();
+      renderSavedCurvesTable();
+      recalculateAndRenderAll(true);
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>
